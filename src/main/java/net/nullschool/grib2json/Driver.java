@@ -40,11 +40,13 @@ import ucar.grib.grib1.Grib1Tables;
 import ucar.grib.grib2.*;
 
 import java.io.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 
 import ucar.unidata.io.RandomAccessFile;
 
-import javax.json.Json;
+import javax.json.*;
 import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonGeneratorFactory;
 
@@ -103,7 +105,7 @@ public class Driver {
             if (args.length == 3) {  // input file, output file, get data for dump
                 raf = new RandomAccessFile(args[0], "r");
                 ps = new PrintStream(
-                    new FilterOutputStream(
+                    new BufferedOutputStream(
                         new FileOutputStream(args[1], false)));
                 displayData = args[2].equalsIgnoreCase("true");
             }
@@ -115,7 +117,7 @@ public class Driver {
                 }
                 else {
                     ps = new PrintStream(
-                        new FilterOutputStream(
+                        new BufferedOutputStream(
                             new FileOutputStream(args[1], false)));
                 }
             }
@@ -138,6 +140,7 @@ public class Driver {
             JsonGenerator jg = jgf.createGenerator(ps);
 
             jg.writeStartArray();
+            boolean first = true;
 
             // record contains objects for all 8 Grib2 sections
             List<Grib2Record> records = g2i.getRecords();
@@ -156,32 +159,83 @@ public class Driver {
 //                printGDS(gds, jg);
                 printPDS(is, pds, jg);
 
-                if (displayData) {
+                if (displayData && first) {
+
+                    class FloatValue implements JsonNumber {
+                        private float f;
+
+                        @Override public ValueType getValueType() {
+                            return ValueType.NUMBER;
+                        }
+
+                        @Override public String toString() {
+                            return Float.toString(f);
+                        }
+
+                        @Override public boolean isIntegral() {
+                            return false;
+                        }
+
+                        @Override public int intValue() {
+                            return (int)f;
+                        }
+
+                        @Override public int intValueExact() {
+                            throw new ArithmeticException();
+                        }
+
+                        @Override public long longValue() {
+                            return (long)f;
+                        }
+
+                        @Override public long longValueExact() {
+                            throw new ArithmeticException();
+                        }
+
+                        @Override public BigInteger bigIntegerValue() {
+                            return BigDecimal.valueOf(f).toBigInteger();
+                        }
+
+                        @Override public BigInteger bigIntegerValueExact() {
+                            throw new ArithmeticException();
+                        }
+
+                        @Override public double doubleValue() {
+                            return f;
+                        }
+
+                        @Override public BigDecimal bigDecimalValue() {
+                            return BigDecimal.valueOf(f);
+                        }
+                    }
+
+                    FloatValue fv = new FloatValue();
+
                     float[] data;
-                    ps.println(
-                        "--------------------------------------------------------------------");
                     Grib2Data gd = new Grib2Data(raf);
                     data = gd.getData(record.getGdsOffset(), record.getPdsOffset(), id.getRefTime());
                     if (data != null) {
+                        jg.writeStartArray("Data");
                         //float missingValue =
                         //        record.getDRS().getPrimaryMissingValue();
                         for (int j = 0; j < data.length; j++) {
                             //if( data[ j ] != missingValue )
-                            ps.println("data[ " + j + " ]=" + data[j]);
+//                            ps.println("data[ " + j + " ]=" + data[j]);
+                            fv.f = data[j];
+                            jg.write(fv);
                         }
+                        jg.writeEnd();
                     }
-                    break;  // only display data for 1st record
                 }
 
                 jg.writeEnd();
+                first = false;
             }
 
             jg.writeEnd();
             jg.close();
 
-            raf.close();    // done reading
-
-            // Catch thrown errors from GribFile
+            raf.close();
         }
         catch (FileNotFoundException noFileError) {
             System.err.println("FileNotFoundException : " + noFileError);
@@ -189,12 +243,7 @@ public class Driver {
         catch (IOException ioError) {
             System.err.println("IOException : " + ioError);
         }
-
-        // Goodbye message
-        //now = Calendar.getInstance().getTime();
-        //System.out.println(now.toString() + " ... End of Grib2Dump!");
-
-    }  // end main
+    }
 
     private void printIS(Grib2IndicatorSection is, JsonGenerator jg) {
         jg.writeStartObject("Discipline")
@@ -777,7 +826,10 @@ public class Driver {
         jg.writeStartObject("Parameter Name")
             .write(
                 Integer.toString(pdsv.getParameterNumber()),
-                ParameterTable.getParameterName(is.getDiscipline(), pdsv.getParameterCategory(), pdsv.getParameterNumber()))
+                ParameterTable.getParameterName(
+                    is.getDiscipline(),
+                    pdsv.getParameterCategory(),
+                    pdsv.getParameterNumber()))
             .writeEnd();
         jg.write(
             "Parameter Units",
