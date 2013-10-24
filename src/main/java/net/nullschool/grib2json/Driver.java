@@ -40,8 +40,6 @@ import ucar.grib.grib1.Grib1Tables;
 import ucar.grib.grib2.*;
 
 import java.io.*;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.*;
 
 import ucar.unidata.io.RandomAccessFile;
@@ -156,7 +154,7 @@ public class Driver {
 
                 printIS(is, jg);
                 printID(id, jg);
-//                printGDS(gds, jg);
+                printGDS(gds, jg);
                 printPDS(is, pds, jg);
 
                 if (displayData && first) {
@@ -190,52 +188,31 @@ public class Driver {
         }
     }
 
+    private void writeCompound(JsonGenerator jg, String name, int code, String description) {
+        jg.writeStartObject(name).write(Integer.toString(code), description).writeEnd();
+    }
+
     private void printIS(Grib2IndicatorSection is, JsonGenerator jg) {
-        jg.writeStartObject("Discipline")
-            .write(Integer.toString(is.getDiscipline()), is.getDisciplineName())
-            .writeEnd();
+        writeCompound(jg, "Discipline", is.getDiscipline(), is.getDisciplineName());
         jg.write("GRIB Edition", is.getGribEdition());
         jg.write("GRIB length", is.getGribLength());
     }
 
-    private void printID(
-        Grib2IdentificationSection id,
-        JsonGenerator jg) {
-
-        jg.writeStartObject("Originating Center")
-            .write(Integer.toString(id.getCenter_id()), Grib1Tables.getCenter_idName(id.getCenter_id()))
-            .writeEnd();
+    private void printID(Grib2IdentificationSection id, JsonGenerator jg) {
+        writeCompound(jg, "Originating Center", id.getCenter_id(), Grib1Tables.getCenter_idName(id.getCenter_id()));
         jg.write("Originating Sub-Center", id.getSubcenter_id());
-        jg.writeStartObject("Significance of Reference Time")
-            .write(Integer.toString(id.getSignificanceOfRT()), id.getSignificanceOfRTName())
-            .writeEnd();
+        writeCompound(jg, "Significance of Reference Time", id.getSignificanceOfRT(), id.getSignificanceOfRTName());
         jg.write("Reference Time", new DateTime(id.getBaseTime()).withZone(DateTimeZone.UTC).toString());
-        jg.writeStartObject("Product Status")
-            .write(Integer.toString(id.getProductStatus()), id.getProductStatusName())
-            .writeEnd();
-        jg.writeStartObject("Product Type")
-            .write(Integer.toString(id.getProductType()), id.getProductTypeName())
-            .writeEnd();
+        writeCompound(jg, "Product Status", id.getProductStatus(), id.getProductStatusName());
+        writeCompound(jg, "Product Type", id.getProductType(), id.getProductTypeName());
     }
 
-    /**
-     * Prints a GDS
-     *
-     * @param gds Grib2GridDefinitionSection
-     * @param ps PrintStream
-     */
-    private void printGDS(
-        Grib2GridDefinitionSection gds,
-        PrintStream ps) {
+    private void printGDS(Grib2GridDefinitionSection gds, JsonGenerator jg) {
 
         Grib2GDSVariables gdsv = gds.getGdsVars();
 
-        ps.println(
-            "         Number of data points : "
-                + gdsv.getNumberPoints());
-        ps.println(
-            "                     Grid Name : " + gdsv.getGdtn() + " "
-                + Grib2Tables.codeTable3_1(gdsv.getGdtn()));
+        jg.write("Number of data points", gdsv.getNumberPoints());
+        writeCompound(jg, "Grid Name", gdsv.getGdtn(), Grib2Tables.codeTable3_1(gdsv.getGdtn()));
 
         String winds = GribNumbers.isBitSet(gdsv.getResolution(), GribNumbers.BIT_5)
             ? "Relative"
@@ -248,549 +225,234 @@ public class Driver {
             case 2:
             case 3:                // Latitude/Longitude Grid
 
-                ps.println(
-                    "                     Grid Shape: " + gdsv.getShape()
-                        + " " + Grib2Tables.codeTable3_2(gdsv.getShape()));
+                writeCompound(jg, "Grid Shape", gdsv.getShape(), Grib2Tables.codeTable3_2(gdsv.getShape()));
                 if (gdsv.getShape() == 1) {
-                    ps.println(
-                        "         Spherical earth radius: "
-                            + gdsv.getEarthRadius());
-
+                    jg.write("Spherical earth radius", gdsv.getEarthRadius());
                 }
                 else if (gdsv.getShape() == 3) {
-                    ps.println(
-                        "         Oblate earth major axis: "
-                            + gdsv.getMajorAxis());
-                    ps.println(
-                        "         Oblate earth minor axis: "
-                            + gdsv.getMinorAxis());
+                    jg.write("Oblate earth major axis", gdsv.getMajorAxis());
+                    jg.write("Oblate earth minor axis", gdsv.getMinorAxis());
                 }
-                ps.println("Number of points along parallel: " + gdsv.getNx());
-                ps.println("Number of points along meridian: " + gdsv.getNy());
-                ps.println(
-                    "                   Basic angle : "
-                        + gdsv.getBasicAngle());
-                ps.println(
-                    "    Subdivisions of basic angle: "
-                        + gdsv.getSubDivisions());
-                ps.println("  Latitude of first grid point : " + gdsv.getLa1());
-                ps.println(" Longitude of first grid point : " + gdsv.getLo1());
-                ps.println(
-                    "  Resolution & Component flags : "
-                        + gdsv.getResolution());
-                ps.println("                         Winds : " + winds);
-                ps.println("   Latitude of last grid point : " + gdsv.getLa2());
-                ps.println("  Longitude of last grid point : " + gdsv.getLo2());
-                ps.println("         i direction increment : " + gdsv.getDx());
-                ps.println("         j direction increment : " + gdsv.getDy());
-                ps.println("                    Grid Units : " + gdsv.getGridUnits());
-                ps.println(
-                    "                 Scanning mode : "
-                        + gdsv.getScanMode());
+                jg.write("Number of points along parallel", gdsv.getNx());
+                jg.write("Number of points along meridian", gdsv.getNy());
+                jg.write("Basic angle", gdsv.getBasicAngle());
+                jg.write("Subdivisions of basic angle", gdsv.getSubDivisions());
+                jg.write("Latitude of first grid point", gdsv.getLa1());
+                jg.write("Longitude of first grid point", gdsv.getLo1());
+                jg.write("Resolution & Component flags", gdsv.getResolution());
+                jg.write("Winds", winds);
+                jg.write("Latitude of last grid point", gdsv.getLa2());
+                jg.write("Longitude of last grid point", gdsv.getLo2());
+                jg.write("i direction increment", gdsv.getDx());
+                jg.write("j direction increment", gdsv.getDy());
+                jg.write("Grid Units", gdsv.getGridUnits());
+                jg.write("Scanning mode", gdsv.getScanMode());
 
-                if (gdsv.getGdtn() == 1) {  //Rotated Latitude/longitude
-                    ps.println(
-                        "     Latitude of southern pole : "
-                            + gdsv.getSpLat());
-                    ps.println(
-                        "    Longitude of southern pole : "
-                            + gdsv.getSpLon());
-                    ps.println(
-                        "                Rotation angle : "
-                            + gdsv.getRotationAngle());
-
+                if (gdsv.getGdtn() == 1) {  // Rotated Latitude/longitude
+                    jg.write("Latitude of southern pole", gdsv.getSpLat());
+                    jg.write("Longitude of southern pole", gdsv.getSpLon());
+                    jg.write("Rotation angle", gdsv.getRotationAngle());
                 }
-                else if (gdsv.getGdtn() == 2) {  //Stretched Latitude/longitude
-                    ps.println(
-                        "              Latitude of pole : "
-                            + gdsv.getPoleLat());
-                    ps.println(
-                        "             Longitude of pole : "
-                            + gdsv.getPoleLon());
-                    ps.println(
-                        "             Stretching factor : "
-                            + gdsv.getStretchingFactor());
-
+                else if (gdsv.getGdtn() == 2) {  // Stretched Latitude/longitude
+                    jg.write("Latitude of pole", gdsv.getPoleLat());
+                    jg.write("Longitude of pole", gdsv.getPoleLon());
+                    jg.write("Stretching factor", gdsv.getStretchingFactor());
                 }
-                else if (gdsv.getGdtn() == 3) {  //Stretched and Rotated
+                else if (gdsv.getGdtn() == 3) {  // Stretched and Rotated
                     // Latitude/longitude
-                    ps.println(
-                        "     Latitude of southern pole : "
-                            + gdsv.getSpLat());
-                    ps.println(
-                        "    Longitude of southern pole : "
-                            + gdsv.getSpLon());
-                    ps.println(
-                        "                Rotation angle : "
-                            + gdsv.getRotationAngle());
-                    ps.println(
-                        "              Latitude of pole : "
-                            + gdsv.getPoleLat());
-                    ps.println(
-                        "             Longitude of pole : "
-                            + gdsv.getPoleLon());
-                    ps.println(
-                        "             Stretching factor : "
-                            + gdsv.getStretchingFactor());
+                    jg.write("Latitude of southern pole", gdsv.getSpLat());
+                    jg.write("Longitude of southern pole", gdsv.getSpLon());
+                    jg.write("Rotation angle", gdsv.getRotationAngle());
+                    jg.write("Latitude of pole", gdsv.getPoleLat());
+                    jg.write("Longitude of pole", gdsv.getPoleLon());
+                    jg.write("Stretching factor", gdsv.getStretchingFactor());
                 }
                 break;
 
             case 10:  // Mercator
-                ps.println(
-                    "                     Grid Shape: " + gdsv.getShape()
-                        + " " + Grib2Tables.codeTable3_2(gdsv.getShape()));
+                writeCompound(jg, "Grid Shape", gdsv.getShape(), Grib2Tables.codeTable3_2(gdsv.getShape()));
                 if (gdsv.getShape() == 1) {
-                    ps.println(
-                        "         Spherical earth radius: "
-                            + gdsv.getEarthRadius());
-
+                    jg.write("Spherical earth radius", gdsv.getEarthRadius());
                 }
                 else if (gdsv.getShape() == 3) {
-                    ps.println(
-                        "         Oblate earth major axis: "
-                            + gdsv.getMajorAxis());
-                    ps.println(
-                        "         Oblate earth minor axis: "
-                            + gdsv.getMinorAxis());
+                    jg.write("Oblate earth major axis", gdsv.getMajorAxis());
+                    jg.write("Oblate earth minor axis", gdsv.getMinorAxis());
                 }
-                ps.println("Number of points along parallel: " + gdsv.getNx());
-                ps.println("Number of points along meridian: " + gdsv.getNy());
-                ps.println("  Latitude of first grid point : " + gdsv.getLa1());
-                ps.println(" Longitude of first grid point : " + gdsv.getLo1());
-                ps.println(
-                    "  Resolution & Component flags : "
-                        + gdsv.getResolution());
-                ps.println("                         Winds : " + winds);
-                ps.println("   Latitude of last grid point : " + gdsv.getLa2());
-                ps.println("  Longitude of last grid point : " + gdsv.getLo2());
-                ps.println(
-                    "                 Scanning mode : "
-                        + gdsv.getScanMode());
-                ps.println(
-                    "                   Basic angle : "
-                        + gdsv.getAngle());
-                ps.println("         i direction increment : " + gdsv.getDx());
-                ps.println("         j direction increment : " + gdsv.getDy());
-                ps.println("                    Grid Units : " + gdsv.getGridUnits());
-
+                jg.write("Number of points along parallel", gdsv.getNx());
+                jg.write("Number of points along meridian", gdsv.getNy());
+                jg.write("Latitude of first grid point", gdsv.getLa1());
+                jg.write("Longitude of first grid point", gdsv.getLo1());
+                jg.write("Resolution & Component flags", gdsv.getResolution());
+                jg.write("Winds", winds);
+                jg.write("Latitude of last grid point", gdsv.getLa2());
+                jg.write("Longitude of last grid point", gdsv.getLo2());
+                jg.write("Scanning mode", gdsv.getScanMode());
+                jg.write("Basic angle", gdsv.getAngle());
+                jg.write("i direction increment", gdsv.getDx());
+                jg.write("j direction increment", gdsv.getDy());
+                jg.write("Grid Units", gdsv.getGridUnits());
                 break;
 
             case 20:  // Polar stereographic projection
-                ps.println(
-                    "                     Grid Shape: " + gdsv.getShape()
-                        + " " + Grib2Tables.codeTable3_2(gdsv.getShape()));
+                writeCompound(jg, "Grid Shape", gdsv.getShape(), Grib2Tables.codeTable3_2(gdsv.getShape()));
                 if (gdsv.getShape() == 1) {
-                    ps.println(
-                        "         Spherical earth radius: "
-                            + gdsv.getEarthRadius());
-
+                    jg.write("Spherical earth radius", gdsv.getEarthRadius());
                 }
                 else if (gdsv.getShape() == 3) {
-                    ps.println(
-                        "         Oblate earth major axis: "
-                            + gdsv.getMajorAxis());
-                    ps.println(
-                        "         Oblate earth minor axis: "
-                            + gdsv.getMinorAxis());
+                    jg.write("Oblate earth major axis", gdsv.getMajorAxis());
+                    jg.write("Oblate earth minor axis", gdsv.getMinorAxis());
                 }
-                ps.println("Number of points along parallel: " + gdsv.getNx());
-                ps.println("Number of points along meridian: " + gdsv.getNy());
-                ps.println("  Latitude of first grid point : " + gdsv.getLa1());
-                ps.println(" Longitude of first grid point : " + gdsv.getLo1());
-                ps.println(
-                    "  Resolution & Component flags : "
-                        + gdsv.getResolution());
-                ps.println("                         Winds : " + winds);
-                ps.println("                    Grid Units : " + gdsv.getGridUnits());
-                ps.println(
-                    "                 Scanning mode : "
-                        + gdsv.getScanMode());
-
+                jg.write("Number of points along parallel", gdsv.getNx());
+                jg.write("Number of points along meridian", gdsv.getNy());
+                jg.write("Latitude of first grid point", gdsv.getLa1());
+                jg.write("Longitude of first grid point", gdsv.getLo1());
+                jg.write("Resolution & Component flags", gdsv.getResolution());
+                jg.write("Winds", winds);
+                jg.write("Grid Units", gdsv.getGridUnits());
+                jg.write("Scanning mode", gdsv.getScanMode());
                 break;
 
             case 30:  // Lambert Conformal
-                ps.println(
-                    "                    Grid Shape : " + gdsv.getShape()
-                        + " " + Grib2Tables.codeTable3_2(gdsv.getShape()));
+                writeCompound(jg, "Grid Shape", gdsv.getShape(), Grib2Tables.codeTable3_2(gdsv.getShape()));
                 if (gdsv.getShape() == 1) {
-                    ps.println(
-                        "         Spherical earth radius: "
-                            + gdsv.getEarthRadius());
-
+                    jg.write("Spherical earth radius", gdsv.getEarthRadius());
                 }
                 else if (gdsv.getShape() == 3) {
-                    ps.println(
-                        "         Oblate earth major axis: "
-                            + gdsv.getMajorAxis());
-                    ps.println(
-                        "         Oblate earth minor axis: "
-                            + gdsv.getMinorAxis());
+                    jg.write("Oblate earth major axis", gdsv.getMajorAxis());
+                    jg.write("Oblate earth minor axis", gdsv.getMinorAxis());
                 }
-                ps.println("                            Nx : " + gdsv.getNx());
-                ps.println("                            Ny : " + gdsv.getNy());
-                ps.println("                           La1 : " + gdsv.getLa1());
-                ps.println("                           Lo1 : " + gdsv.getLo1());
-                ps.println(
-                    "  Resolution & Component flags : "
-                        + gdsv.getResolution());
-                ps.println("                         Winds : " + winds);
-                ps.println("                           LaD : " + gdsv.getLaD());
-                ps.println("                           LoV : " + gdsv.getLoV());
-                ps.println("                            Dx : " + gdsv.getDx());
-                ps.println("                            Dy : " + gdsv.getDy());
-                ps.println("                    Grid Units : " + gdsv.getGridUnits());
-                ps.println(
-                    "             Projection center : "
-                        + gdsv.getProjectionFlag());
-                ps.println(
-                    "                 Scanning mode : "
-                        + gdsv.getScanMode());
-                ps.println(
-                    "                        Latin1 : "
-                        + gdsv.getLatin1());
-                ps.println(
-                    "                        Latin2 : "
-                        + gdsv.getLatin2());
-                ps.println(
-                    "                         SpLat : "
-                        + gdsv.getSpLat());
-                ps.println(
-                    "                         SpLon : "
-                        + gdsv.getSpLon());
-
+                jg.write("Nx", gdsv.getNx());
+                jg.write("Ny", gdsv.getNy());
+                jg.write("La1", gdsv.getLa1());
+                jg.write("Lo1", gdsv.getLo1());
+                jg.write("Resolution & Component flags", gdsv.getResolution());
+                jg.write("Winds", winds);
+                jg.write("LaD", gdsv.getLaD());
+                jg.write("LoV", gdsv.getLoV());
+                jg.write("Dx", gdsv.getDx());
+                jg.write("Dy", gdsv.getDy());
+                jg.write("Grid Units", gdsv.getGridUnits());
+                jg.write("Projection center", gdsv.getProjectionFlag());
+                jg.write("Scanning mode", gdsv.getScanMode());
+                jg.write("Latin1", gdsv.getLatin1());
+                jg.write("Latin2", gdsv.getLatin2());
+                jg.write("SpLat", gdsv.getSpLat());
+                jg.write("SpLon", gdsv.getSpLon());
                 break;
 
             case 40:
             case 41:
             case 42:
             case 43:  // Gaussian latitude/longitude
-                ps.println(
-                    "                     Grid Shape: " + gdsv.getShape()
-                        + " " + Grib2Tables.codeTable3_2(gdsv.getShape()));
+                writeCompound(jg, "Grid Shape", gdsv.getShape(), Grib2Tables.codeTable3_2(gdsv.getShape()));
                 if (gdsv.getShape() == 1) {
-                    ps.println(
-                        "         Spherical earth radius: "
-                            + gdsv.getEarthRadius());
-
+                    jg.write("Spherical earth radius", gdsv.getEarthRadius());
                 }
                 else if (gdsv.getShape() == 3) {
-                    ps.println(
-                        "         Oblate earth major axis: "
-                            + gdsv.getMajorAxis());
-                    ps.println(
-                        "         Oblate earth minor axis: "
-                            + gdsv.getMinorAxis());
+                    jg.write("Oblate earth major axis", gdsv.getMajorAxis());
+                    jg.write("Oblate earth minor axis", gdsv.getMinorAxis());
                 }
-                ps.println("Number of points along parallel: " + gdsv.getNx());
-                ps.println("Number of points along meridian: " + gdsv.getNy());
-                ps.println(
-                    "                   Basic angle : "
-                        + gdsv.getAngle());
-                ps.println(
-                    "    Subdivisions of basic angle: "
-                        + gdsv.getSubDivisions());
-                ps.println("  Latitude of first grid point : " + gdsv.getLa1());
-                ps.println(" Longitude of first grid point : " + gdsv.getLo1());
-                ps.println(
-                    "  Resolution & Component flags : "
-                        + gdsv.getResolution());
-                ps.println("                         Winds : " + winds);
-                ps.println("                    Grid Units : " + gdsv.getGridUnits());
-                ps.println("   Latitude of last grid point : " + gdsv.getLa2());
-                ps.println("  Longitude of last grid point : " + gdsv.getLo2());
-                ps.println("         i direction increment : " + gdsv.getDx());
-                ps.println(
-                    "             Stretching factor : "
-                        + gdsv.getStretchingFactor());
-                ps.println("           Number of parallels : " + gdsv.getNp());
-                ps.println(
-                    "                 Scanning mode : "
-                        + gdsv.getScanMode());
+                jg.write("Number of points along parallel", gdsv.getNx());
+                jg.write("Number of points along meridian", gdsv.getNy());
+                jg.write("Basic angle", gdsv.getAngle());
+                jg.write("Subdivisions of basic angle", gdsv.getSubDivisions());
+                jg.write("Latitude of first grid point", gdsv.getLa1());
+                jg.write("Longitude of first grid point", gdsv.getLo1());
+                jg.write("Resolution & Component flags", gdsv.getResolution());
+                jg.write("Winds", winds);
+                jg.write("Grid Units", gdsv.getGridUnits());
+                jg.write("Latitude of last grid point", gdsv.getLa2());
+                jg.write("Longitude of last grid point", gdsv.getLo2());
+                jg.write("i direction increment", gdsv.getDx());
+                jg.write("Stretching factor", gdsv.getStretchingFactor());
+                jg.write("Number of parallels", gdsv.getNp());
+                jg.write("Scanning mode", gdsv.getScanMode());
 
                 if (gdsv.getGdtn() == 41) {  //Rotated Gaussian Latitude/longitude
-                    ps.println(
-                        "     Latitude of southern pole : "
-                            + gdsv.getSpLat());
-                    ps.println(
-                        "    Longitude of southern pole : "
-                            + gdsv.getSpLon());
-                    ps.println(
-                        "                Rotation angle : "
-                            + gdsv.getRotationAngle());
-
+                    jg.write("Latitude of southern pole", gdsv.getSpLat());
+                    jg.write("Longitude of southern pole", gdsv.getSpLon());
+                    jg.write("Rotation angle", gdsv.getRotationAngle());
                 }
                 else if (gdsv.getGdtn() == 42) {  //Stretched Gaussian
                     // Latitude/longitude
-                    ps.println(
-                        "              Latitude of pole : "
-                            + gdsv.getPoleLat());
-                    ps.println(
-                        "             Longitude of pole : "
-                            + gdsv.getPoleLon());
-                    ps.println(
-                        "             Stretching factor : "
-                            + gdsv.getStretchingFactor());
-
+                    jg.write("Latitude of pole", gdsv.getPoleLat());
+                    jg.write("Longitude of pole", gdsv.getPoleLon());
+                    jg.write("Stretching factor", gdsv.getStretchingFactor());
                 }
                 else if (gdsv.getGdtn() == 43) {  //Stretched and Rotated Gaussian
                     // Latitude/longitude
-                    ps.println(
-                        "     Latitude of southern pole : "
-                            + gdsv.getSpLat());
-                    ps.println(
-                        "    Longitude of southern pole : "
-                            + gdsv.getSpLon());
-                    ps.println(
-                        "                Rotation angle : "
-                            + gdsv.getRotationAngle());
-                    ps.println(
-                        "              Latitude of pole : "
-                            + gdsv.getPoleLat());
-                    ps.println(
-                        "             Longitude of pole : "
-                            + gdsv.getPoleLon());
-                    ps.println(
-                        "             Stretching factor : "
-                            + gdsv.getStretchingFactor());
+                    jg.write("Latitude of southern pole", gdsv.getSpLat());
+                    jg.write("Longitude of southern pole", gdsv.getSpLon());
+                    jg.write("Rotation angle", gdsv.getRotationAngle());
+                    jg.write("Latitude of pole", gdsv.getPoleLat());
+                    jg.write("Longitude of pole", gdsv.getPoleLon());
+                    jg.write("Stretching factor", gdsv.getStretchingFactor());
                 }
                 break;
-
-        /*  no test files so not implemented
-        case 50:
-        case 51:
-        case 52:
-        case 53:  // Spherical harmonic coefficients
-          ps.println("     J - pentagonal resolution : " + gdsv.getJ());
-          ps.println("     K - pentagonal resolution : " + gdsv.getK());
-          ps.println("     M - pentagonal resolution : " + gdsv.getM());
-          ps.println("Method used to define the norm : "
-                  + gdsv.getMethod());
-          ps.println("     Mode indicating the order : " + gdsv.getMode());
-          ps.println("                    Grid Units : " + gdsv.getGridUnits());
-          if (gdsv.getGdtn() == 51) {  //Rotated Spherical harmonic coefficients
-            ps.println("     Latitude of southern pole : "
-                    + gdsv.getSpLat());
-            ps.println("    Longitude of southern pole : "
-                    + gdsv.getSpLon());
-            ps.println("                Rotation angle : "
-                    + gdsv.getRotationAngle());
-
-          } else if (gdsv.getGdtn() == 52) {  //Stretched Spherical
-            // harmonic coefficients
-            ps.println("              Latitude of pole : "
-                    + gdsv.getPoleLat());
-            ps.println("             Longitude of pole : "
-                    + gdsv.getPoleLon());
-            ps.println("             Stretching factor : "
-                    + gdsv.getStretchingFactor());
-
-          } else if (gdsv.getGdtn() == 53) {  //Stretched and Rotated
-            // Spherical harmonic coefficients
-            ps.println("     Latitude of southern pole : "
-                    + gdsv.getSpLat());
-            ps.println("    Longitude of southern pole : "
-                    + gdsv.getSpLon());
-            ps.println("                Rotation angle : "
-                    + gdsv.getRotationAngle());
-            ps.println("              Latitude of pole : "
-                    + gdsv.getPoleLat());
-            ps.println("             Longitude of pole : "
-                    + gdsv.getPoleLon());
-            ps.println("             Stretching factor : "
-                    + gdsv.getStretchingFactor());
-          }
-          break;
-          */
 
             case 90:  // Space view perspective or orthographic
-                ps.println(
-                    "                     Grid Shape: " + gdsv.getShape()
-                        + " " + Grib2Tables.codeTable3_2(gdsv.getShape()));
+                writeCompound(jg, "Grid Shape", gdsv.getShape(), Grib2Tables.codeTable3_2(gdsv.getShape()));
                 if (gdsv.getShape() == 1) {
-                    ps.println(
-                        "         Spherical earth radius: "
-                            + gdsv.getEarthRadius());
-
+                    jg.write("Spherical earth radius", gdsv.getEarthRadius());
                 }
                 else if (gdsv.getShape() == 3) {
-                    ps.println(
-                        "        Oblate earth major axis: "
-                            + gdsv.getMajorAxis());
-                    ps.println(
-                        "        Oblate earth minor axis: "
-                            + gdsv.getMinorAxis());
+                    jg.write("Oblate earth major axis", gdsv.getMajorAxis());
+                    jg.write("Oblate earth minor axis", gdsv.getMinorAxis());
                 }
-                ps.println("Number of points along parallel: " + gdsv.getNx());
-                ps.println("Number of points along meridian: " + gdsv.getNy());
-                ps.println("Latitude of sub-satellite point: " + gdsv.getLap());
-                ps.println("  Longitude of sub-satellite pt: " + gdsv.getLop());
-                ps.println(
-                    "  Resolution & Component flags : "
-                        + gdsv.getResolution());
-                ps.println("                         Winds : " + winds);
-                ps.println("      Dx i direction increment : " + gdsv.getDx());
-                ps.println("      Dy j direction increment : " + gdsv.getDy());
-                ps.println("                    Grid Units : " + gdsv.getGridUnits());
-                ps.println("Xp-coordinate of sub-satellite : " + gdsv.getXp());
-                ps.println("Yp-coordinate of sub-satellite : " + gdsv.getYp());
-                ps.println(
-                    "                 Scanning mode : "
-                        + gdsv.getScanMode());
-                ps.println(
-                    "                   Basic angle : "
-                        + gdsv.getAngle());
-                ps.println(
-                    "     Nr Altitude of the camera : "
-                        + gdsv.getNr());
-                ps.println("       Xo-coordinate of origin : " + gdsv.getXo());
-                ps.println("       Yo-coordinate of origin : " + gdsv.getYo());
-
+                jg.write("Number of points along parallel", gdsv.getNx());
+                jg.write("Number of points along meridian", gdsv.getNy());
+                jg.write("Latitude of sub-satellite point", gdsv.getLap());
+                jg.write("Longitude of sub-satellite pt", gdsv.getLop());
+                jg.write("Resolution & Component flags", gdsv.getResolution());
+                jg.write("Winds", winds);
+                jg.write("Dx i direction increment", gdsv.getDx());
+                jg.write("Dy j direction increment", gdsv.getDy());
+                jg.write("Grid Units", gdsv.getGridUnits());
+                jg.write("Xp-coordinate of sub-satellite", gdsv.getXp());
+                jg.write("Yp-coordinate of sub-satellite", gdsv.getYp());
+                jg.write("Scanning mode", gdsv.getScanMode());
+                jg.write("Basic angle", gdsv.getAngle());
+                jg.write("Nr Altitude of the camera", gdsv.getNr());
+                jg.write("Xo-coordinate of origin", gdsv.getXo());
+                jg.write("Yo-coordinate of origin", gdsv.getYo());
                 break;
 
-        /* no test data, so not implemented
-        case 100:  // Triangular grid based on an icosahedron
-          ps.println("   Exponent of 2 for intervals : " + gdsv.getN2());
-          ps.println("   Exponent of 3 for intervals : " + gdsv.getN3());
-          ps.println("           Number of intervals : " + gdsv.getNi());
-          ps.println("            Number of diamonds : " + gdsv.getNd());
-          ps.println("              Latitude of pole : "
-                  + gdsv.getPoleLat());
-          ps.println("             Longitude of pole : "
-                  + gdsv.getPoleLon());
-          ps.println("           Grid point position : "
-                  + gdsv.getPosition());
-          ps.println("      Number order of diamonds : "
-                  + gdsv.getOrder());
-          ps.println("                 Scanning mode : "
-                  + gdsv.getScanMode());
-          ps.println("           Number of parallels : " + gdsv.getN());
-          ps.println("                    Grid Units : " + gdsv.getGridUnits());
-          break;
-
-        case 110:  // Equatorial azimuthal equidistant projection
-          ps.println("                     Grid Shape: " + gdsv.getShape()
-                  + " " + Grib2Tables.getShapeName( gdsv.getShape() ));
-          if (gdsv.getShape() == 1) {
-            ps.println("         Spherical earth radius: "
-                    + gdsv.getEarthRadius());
-
-          } else if (gdsv.getShape() == 3) {
-            ps.println("         Oblate earth major axis: "
-                    + gdsv.getMajorAxis());
-            ps.println("         Oblate earth minor axis: "
-                    + gdsv.getMinorAxis());
-          }
-          ps.println("Number of points along parallel: " + gdsv.getNx());
-          ps.println("Number of points along meridian: " + gdsv.getNy());
-          ps.println("  Latitude of first grid point : " + gdsv.getLa1());
-          ps.println(" Longitude of first grid point : " + gdsv.getLo1());
-          ps.println("  Resolution & Component flags : "
-                  + gdsv.getResolution());
-          ps.println("                         Winds : " + winds);
-          ps.println("         i direction increment : " + gdsv.getDx());
-          ps.println("         j direction increment : " + gdsv.getDy());
-          ps.println("                    Grid Units : " + gdsv.getGridUnits());
-          ps.println("             Projection center : "
-                  + gdsv.getProjectionCenter());
-          ps.println("                 Scanning mode : "
-                  + gdsv.getScanMode());
-
-          break;
-          */
-
-          /* no test data, so not implemented
-        case 120:  // Azimuth-range Projection
-          ps.println("           Number of data bins : " + gdsv.getNb());
-          ps.println("             Number of radials : " + gdsv.getNr());
-          ps.println("Number of points along parallel: " + gdsv.getNx());
-          ps.println("  Latitude of first grid point : " + gdsv.getLa1());
-          ps.println(" Longitude of first grid point : " + gdsv.getLo1());
-          ps.println("         i direction increment : " + gdsv.getDx());
-          ps.println("                    Grid Units : " + gdsv.getGrid());
-          ps.println("            Offset from origin : "
-                  + gdsv.getDstart());
-          ps.println("need code to get azi and adelta");
-
-          break;
-          */
-
             case 204:  // Curvilinear orthographic grib
-                ps.println(
-                    "                     Grid Shape: " + gdsv.getShape()
-                        + " " + Grib2Tables.codeTable3_2(gdsv.getShape()));
+                writeCompound(jg, "Grid Shape", gdsv.getShape(), Grib2Tables.codeTable3_2(gdsv.getShape()));
                 if (gdsv.getShape() == 1) {
-                    ps.println(
-                        "         Spherical earth radius: "
-                            + gdsv.getEarthRadius());
-
+                    jg.write("Spherical earth radius", gdsv.getEarthRadius());
                 }
                 else if (gdsv.getShape() == 3) {
-                    ps.println(
-                        "        Oblate earth major axis: "
-                            + gdsv.getMajorAxis());
-                    ps.println(
-                        "        Oblate earth minor axis: "
-                            + gdsv.getMinorAxis());
+                    jg.write("Oblate earth major axis", gdsv.getMajorAxis());
+                    jg.write("Oblate earth minor axis", gdsv.getMinorAxis());
                 }
-                ps.println("Number of points along parallel: " + gdsv.getNx());
-                ps.println("Number of points along meridian: " + gdsv.getNy());
-                ps.println(
-                    "  Resolution & Component flags : "
-                        + gdsv.getResolution());
-                ps.println("                         Winds : " + winds);
-                //              ps.println("      Dx i direction increment : " + gdsv.getDx());
-                //              ps.println("      Dy j direction increment : " + gdsv.getDy());
-                ps.println("                    Grid Units : " + gdsv.getGridUnits());
-                ps.println(
-                    "                 Scanning mode : "
-                        + gdsv.getScanMode());
-
+                jg.write("Number of points along parallel", gdsv.getNx());
+                jg.write("Number of points along meridian", gdsv.getNy());
+                jg.write("Resolution & Component flags", gdsv.getResolution());
+                jg.write("Winds", winds);
+                jg.write("Grid Units", gdsv.getGridUnits());
+                jg.write("Scanning mode", gdsv.getScanMode());
                 break;
 
             default:
-                ps.println("Unknown Grid Type" + gdsv.getGdtn());
+                jg.write("Unknown Grid Type", gdsv.getGdtn());
+        }
+    }
 
-        }  // end switch gdtn
-    }      // end printGDS
-
-    private void printPDS(
-        Grib2IndicatorSection is,
-        Grib2Pds pdsv,
-        JsonGenerator jg) {
+    private void printPDS(Grib2IndicatorSection is, Grib2Pds pdsv, JsonGenerator jg) {
 
         int productDefinition = pdsv.getProductDefinitionTemplate();
 
-        jg.writeStartObject("Product Definition")
-            .write(Integer.toString(productDefinition), Grib2Tables.codeTable4_0(productDefinition))
-            .writeEnd();
-        jg.writeStartObject("Parameter Category")
-            .write(
-                Integer.toString(pdsv.getParameterCategory()),
-                ParameterTable.getCategoryName(is.getDiscipline(), pdsv.getParameterCategory()))
-            .writeEnd();
-        jg.writeStartObject("Parameter Name")
-            .write(
-                Integer.toString(pdsv.getParameterNumber()),
-                ParameterTable.getParameterName(
-                    is.getDiscipline(),
-                    pdsv.getParameterCategory(),
-                    pdsv.getParameterNumber()))
-            .writeEnd();
-        jg.write(
-            "Parameter Units",
-            ParameterTable.getParameterUnit(is.getDiscipline(), pdsv.getParameterCategory(), pdsv.getParameterNumber()));
+        writeCompound(jg, "Product Definition", productDefinition, Grib2Tables.codeTable4_0(productDefinition));
+        writeCompound(jg, "Parameter Category", pdsv.getParameterCategory(), ParameterTable.getCategoryName(is.getDiscipline(), pdsv.getParameterCategory()));
+        writeCompound(jg, "Parameter Name", pdsv.getParameterNumber(), ParameterTable.getParameterName(is.getDiscipline(), pdsv.getParameterCategory(), pdsv.getParameterNumber()));
+        jg.write("Parameter Units", ParameterTable.getParameterUnit(is.getDiscipline(), pdsv.getParameterCategory(), pdsv.getParameterNumber()));
         int tgp = pdsv.getGenProcessType();
-        jg.writeStartObject("Generating Process Type")
-            .write(Integer.toString(tgp), Grib2Tables.codeTable4_3(tgp))
-            .writeEnd();
+        writeCompound(jg, "Generating Process Type", tgp, Grib2Tables.codeTable4_3(tgp));
         jg.write("ForecastTime", pdsv.getForecastTime());
-        jg.writeStartObject("First Surface Type")
-            .write(Integer.toString(pdsv.getLevelType1()), Grib2Tables.codeTable4_5(pdsv.getLevelType1()))
-            .writeEnd();
+        writeCompound(jg, "First Surface Type", pdsv.getLevelType1(), Grib2Tables.codeTable4_5(pdsv.getLevelType1()));
         jg.write("First Surface value", pdsv.getLevelValue1());
-        jg.writeStartObject("Second Surface Type")
-            .write(Integer.toString(pdsv.getLevelType2()), Grib2Tables.codeTable4_5(pdsv.getLevelType2()))
-            .writeEnd();
+        writeCompound(jg, "Second Surface Type", pdsv.getLevelType2(), Grib2Tables.codeTable4_5(pdsv.getLevelType2()));
         jg.write("Second Surface value", pdsv.getLevelValue2());
     }
 
