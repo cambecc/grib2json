@@ -161,68 +161,13 @@ public class Driver {
 
                 if (displayData && first) {
 
-                    class FloatValue implements JsonNumber {
-                        private float f;
-
-                        @Override public ValueType getValueType() {
-                            return ValueType.NUMBER;
-                        }
-
-                        @Override public String toString() {
-                            return Float.toString(f);
-                        }
-
-                        @Override public boolean isIntegral() {
-                            return false;
-                        }
-
-                        @Override public int intValue() {
-                            return (int)f;
-                        }
-
-                        @Override public int intValueExact() {
-                            throw new ArithmeticException();
-                        }
-
-                        @Override public long longValue() {
-                            return (long)f;
-                        }
-
-                        @Override public long longValueExact() {
-                            throw new ArithmeticException();
-                        }
-
-                        @Override public BigInteger bigIntegerValue() {
-                            return BigDecimal.valueOf(f).toBigInteger();
-                        }
-
-                        @Override public BigInteger bigIntegerValueExact() {
-                            throw new ArithmeticException();
-                        }
-
-                        @Override public double doubleValue() {
-                            return f;
-                        }
-
-                        @Override public BigDecimal bigDecimalValue() {
-                            return BigDecimal.valueOf(f);
-                        }
-                    }
-
-                    FloatValue fv = new FloatValue();
-
                     float[] data;
                     Grib2Data gd = new Grib2Data(raf);
                     data = gd.getData(record.getGdsOffset(), record.getPdsOffset(), id.getRefTime());
                     if (data != null) {
                         jg.writeStartArray("Data");
-                        //float missingValue =
-                        //        record.getDRS().getPrimaryMissingValue();
-                        for (int j = 0; j < data.length; j++) {
-                            //if( data[ j ] != missingValue )
-//                            ps.println("data[ " + j + " ]=" + data[j]);
-                            fv.f = data[j];
-                            jg.write(fv);
+                        for (float value : data) {
+                            jg.write(new FloatValue(value));
                         }
                         jg.writeEnd();
                     }

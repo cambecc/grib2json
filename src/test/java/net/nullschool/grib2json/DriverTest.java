@@ -12,6 +12,7 @@ public class DriverTest {
 
     @Test
     public void test_1() {
+//        Driver.main(new String[] {"c:/users/cambecc/desktop/gfs/gfs.t18z.pgrb2f00", "out.txt", "true"});
         Driver.main(new String[] {"c:/users/cambecc/desktop/gfs/gfs.t18z.pgrbf00.2p5deg.grib2", "out.txt", "true"});
     }
 }
