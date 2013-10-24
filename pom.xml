@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~~ grib2json Project definition
+  ~~
+  ~~ @author Cameron Beccario
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>net.nullschool</groupId>
+    <artifactId>grib2json</artifactId>
+    <version>0.8.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>grib2json</name>
+    <description>GRIB to JSON converter</description>
+    <url>https://github.com/cambecc/grib2json</url>
+    <inceptionYear>2013</inceptionYear>
+
+<!--
+    <licenses>
+        <license>
+            <name>CC0 1.0 Universal</name>
+            <url>http://creativecommons.org/publicdomain/zero/1.0/</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+-->
+    <developers>
+        <developer>
+            <id>cambecc</id>
+            <name>Cameron Beccario</name>
+            <email>cambecc@nullschool.net</email>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git@github.com:cambecc/grib2json.git</connection>
+        <developerConnection>scm:git:git@github.com:cambecc/grib2json.git</developerConnection>
+        <url>https://github.com/cambecc/grib2json.git</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Compile with Java 7. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.0</version>
+                <configuration>
+                    <source>1.7</source>
+                    <target>1.7</target>
+                    <compilerVersion>1.7</compilerVersion>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
