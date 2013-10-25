@@ -39,10 +39,10 @@ Usage: grib2json [options] FILE
 
 For example, the following command outputs to stdout the records for parameter 2 (U-component_of_wind), with
 surface type 103 (Specified height level above ground), and surface value 10.0 meters from the GRIB2 file
-_gfs.t18z.pgrbf00.2p5deg.grib2_. Notice the optional inclusion of human-readable _xyzName_ keys:
+_gfs.t18z.pgrbf00.2p5deg.grib2_. Notice the optional inclusion of human-readable _xyzName_ keys and the data array:
 
 ```
-> grib2json --fp 2 --fs 103 --fv 10.0 --names gfs.t18z.pgrbf00.2p5deg.grib2
+> grib2json --names --data --fp 2 --fs 103 --fv 10.0 gfs.t18z.pgrbf00.2p5deg.grib2
 
 [
     {
@@ -60,7 +60,13 @@ _gfs.t18z.pgrbf00.2p5deg.grib2_. Notice the optional inclusion of human-readable
             "surface1TypeName":"Specified height level above ground",
             "surface1Value":10.0,
             ...
-        }
+        },
+        "data":[
+            -2.12,
+            -2.27,
+            -2.41,
+            ...
+        ]
     }
 ]
 ```
