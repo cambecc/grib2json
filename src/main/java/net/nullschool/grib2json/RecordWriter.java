@@ -25,8 +25,9 @@ final class RecordWriter {
     private final Grib2IndicatorSection ins;
     private final Grib2IdentificationSection ids;
     private final Grib2Pds pds;
-    private final Grib2GDSVariables gdsv;
+    private final Grib2GDSVariables gds;
     private final boolean includeCodeDescriptions;
+
     private Set<String> keys = new HashSet<>();
 
     RecordWriter(JsonGenerator jg, Grib2Record record, boolean includeCodeDescriptions) {
@@ -35,7 +36,7 @@ final class RecordWriter {
         this.ins = record.getIs();
         this.ids = record.getId();
         this.pds = record.getPDS().getPdsVars();
-        this.gdsv = record.getGDS().getGdsVars();
+        this.gds = record.getGDS().getGdsVars();
         this.includeCodeDescriptions = includeCodeDescriptions;
     }
 
@@ -123,49 +124,49 @@ final class RecordWriter {
     }
 
     private void writeGridShape() {
-        write("shape", gdsv.getShape(), codeTable3_2(gdsv.getShape()));  // grid shape
-        switch (gdsv.getShape()) {
+        write("shape", gds.getShape(), codeTable3_2(gds.getShape()));  // grid shape
+        switch (gds.getShape()) {
             case 1:
-                write("earthRadius", gdsv.getEarthRadius());  // Spherical earth radius
+                write("earthRadius", gds.getEarthRadius());  // Spherical earth radius
                 break;
             case 3:
-                write("majorAxis", gdsv.getMajorAxis());  // Oblate earth major axis
-                write("minorAxis", gdsv.getMinorAxis());  // Oblate earth minor axis
+                write("majorAxis", gds.getMajorAxis());  // Oblate earth major axis
+                write("minorAxis", gds.getMinorAxis());  // Oblate earth minor axis
                 break;
         }
     }
 
     private void writeGridSize() {
-        write("gridUnits", gdsv.getGridUnits());
-        write("resolution", gdsv.getResolution());  // Resolution & Component flags
-        write("winds", isBitSet(gdsv.getResolution(), BIT_5) ? "relative" : "true");
-        write("scanMode", gdsv.getScanMode());
-        write("nx", gdsv.getNx());  // Number of points along parallel
-        write("ny", gdsv.getNy());  // Number of points along meridian
+        write("gridUnits", gds.getGridUnits());
+        write("resolution", gds.getResolution());  // Resolution & Component flags
+        write("winds", isBitSet(gds.getResolution(), BIT_5) ? "relative" : "true");
+        write("scanMode", gds.getScanMode());
+        write("nx", gds.getNx());  // Number of points along parallel
+        write("ny", gds.getNy());  // Number of points along meridian
     }
 
     private void writeLatLongBounds() {
-        writeIfSet("la1", gdsv.getLa1());  // Latitude of first grid point
-        writeIfSet("lo1", gdsv.getLo1());  // Longitude of first grid point
-        writeIfSet("la2", gdsv.getLa2());  // Latitude of last grid point
-        writeIfSet("lo2", gdsv.getLo2());  // Longitude of last grid point
-        writeIfSet("dx", gdsv.getDx());    // i direction increment
-        writeIfSet("dy", gdsv.getDy());    // j direction increment
+        writeIfSet("la1", gds.getLa1());  // Latitude of first grid point
+        writeIfSet("lo1", gds.getLo1());  // Longitude of first grid point
+        writeIfSet("la2", gds.getLa2());  // Latitude of last grid point
+        writeIfSet("lo2", gds.getLo2());  // Longitude of last grid point
+        writeIfSet("dx", gds.getDx());    // i direction increment
+        writeIfSet("dy", gds.getDy());    // j direction increment
     }
 
     private void writeRotationAndStretch() {
-        writeIfSet("spLat", gdsv.getSpLat());  // Latitude of southern pole
-        writeIfSet("spLon", gdsv.getSpLon());  // Longitude of southern pole
-        writeIfSet("rotationAngle", gdsv.getRotationAngle());
-        writeIfSet("poleLat", gdsv.getPoleLat());
-        writeIfSet("poleLon", gdsv.getPoleLon());
-        writeIfSet("stretchingFactor", gdsv.getStretchingFactor());
+        writeIfSet("spLat", gds.getSpLat());  // Latitude of southern pole
+        writeIfSet("spLon", gds.getSpLon());  // Longitude of southern pole
+        writeIfSet("rotationAngle", gds.getRotationAngle());
+        writeIfSet("poleLat", gds.getPoleLat());
+        writeIfSet("poleLon", gds.getPoleLon());
+        writeIfSet("stretchingFactor", gds.getStretchingFactor());
     }
 
     private void writeAngle() {
-        writeIfSet("angle", gdsv.getAngle());
-        writeIfSet("basicAngle", gdsv.getBasicAngle());
-        writeIfSet("subDivisions", gdsv.getSubDivisions());
+        writeIfSet("angle", gds.getAngle());
+        writeIfSet("basicAngle", gds.getBasicAngle());
+        writeIfSet("subDivisions", gds.getSubDivisions());
     }
 
     private void writeLatLongGrid() {
@@ -174,7 +175,7 @@ final class RecordWriter {
         writeAngle();
         writeLatLongBounds();
         writeRotationAndStretch();
-        writeIfSet("np", gdsv.getNp());  // Number of parallels
+        writeIfSet("np", gds.getNp());  // Number of parallels
     }
 
     private void writeMercatorGrid() {
@@ -196,11 +197,11 @@ final class RecordWriter {
         writeLatLongBounds();
         writeRotationAndStretch();
 
-        write("laD", gdsv.getLaD());
-        write("loV", gdsv.getLoV());
-        write("projectionFlag", gdsv.getProjectionFlag());  // projection center
-        write("latin1", gdsv.getLatin1());
-        write("latin2", gdsv.getLatin2());
+        write("laD", gds.getLaD());
+        write("loV", gds.getLoV());
+        write("projectionFlag", gds.getProjectionFlag());  // projection center
+        write("latin1", gds.getLatin1());
+        write("latin2", gds.getLatin2());
     }
 
     private void writeSpaceOrOrthographicGrid() {
@@ -209,13 +210,13 @@ final class RecordWriter {
         writeAngle();
         writeLatLongBounds();
 
-        write("lap", gdsv.getLap());  // Latitude of sub-satellite point
-        write("lop", gdsv.getLop());  // Longitude of sub-satellite pt
-        write("xp", gdsv.getXp());    // Xp-coordinate of sub-satellite
-        write("yp", gdsv.getYp());    // Yp-coordinate of sub-satellite
-        write("nr", gdsv.getNr());    // Nr Altitude of the camera
-        write("xo", gdsv.getXo());    // Xo-coordinate of origin
-        write("yo", gdsv.getYo());    // Yo-coordinate of origin
+        write("lap", gds.getLap());  // Latitude of sub-satellite point
+        write("lop", gds.getLop());  // Longitude of sub-satellite pt
+        write("xp", gds.getXp());    // Xp-coordinate of sub-satellite
+        write("yp", gds.getYp());    // Yp-coordinate of sub-satellite
+        write("nr", gds.getNr());    // Nr Altitude of the camera
+        write("xo", gds.getXo());    // Xo-coordinate of origin
+        write("yo", gds.getYo());    // Yo-coordinate of origin
     }
 
     private void writeCurvilinearGrid() {
@@ -224,10 +225,10 @@ final class RecordWriter {
     }
 
     private void writeGridDefinition() {
-        final int gridTemplate = gdsv.getGdtn();
+        final int gridTemplate = gds.getGdtn();
 
         write("gridDefinition", gridTemplate, codeTable3_1(gridTemplate));  // Grid Name
-        write("numberPoints", gdsv.getNumberPoints());  // Number of data points
+        write("numberPoints", gds.getNumberPoints());  // Number of data points
 
         switch (gridTemplate) {
             case 0:

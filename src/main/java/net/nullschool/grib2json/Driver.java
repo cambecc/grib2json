@@ -33,9 +33,13 @@
 
 package net.nullschool.grib2json;
 
+import com.lexicalscope.jewel.JewelRuntimeException;
+import com.lexicalscope.jewel.cli.Cli;
+import com.lexicalscope.jewel.cli.CliFactory;
 import ucar.grib.grib2.*;
 
 import java.io.*;
+import java.nio.file.*;
 import java.util.*;
 
 import ucar.unidata.io.RandomAccessFile;
@@ -50,90 +54,47 @@ import javax.json.stream.JsonGeneratorFactory;
  *
  * @author Cameron Beccario
  */
-public class Driver {
+class Driver {
 
-    /**
-     * Dumps usage of the class.
-     *
-     * @param className Grib2Dump
-     */
-    private static void usage(String className) {
-        System.out.println();
-        System.out.println("Usage of " + className + ":");
-        System.out.println("Parameters:");
-        System.out.println("<GribFileToRead> reads/scans metadata");
-        System.out.println("<output file> file to store results");
-        System.out.println(
-            "<true or false> whether to read/display data too");
-        System.out.println();
-        System.out.println(
-            "java " + className
-                + " <GribFileToRead> <output file> <true or false>");
+    static void validateOptions(Options options) {
+        Path path = options.getFile().toPath();
+        if (!Files.exists(path)) {
+            throw new IllegalArgumentException("Cannot find input file: " + path);
+        }
     }
 
-    /**
-     * Dump of content of the Grib2 file to text.
-     *
-     * @param args Gribfile,  [output file], [true|false] output data.
-     */
-    public void gribDump(String args[]) throws IOException {
-        boolean displayData = false;
+    static void gribDump(Options options) throws IOException {
+        validateOptions(options);
 
-        RandomAccessFile raf;
-        PrintStream ps = System.out;
-        if (args.length == 3) {  // input file, output file, get data for dump
-            raf = new RandomAccessFile(args[0], "r");
-            ps = new PrintStream(
-                new BufferedOutputStream(
-                    new FileOutputStream(args[1], false)));
-            displayData = args[2].equalsIgnoreCase("true");
-        }
-        else if (args.length == 2) {  // input file and output file for dump
-            raf = new RandomAccessFile(args[0], "r");
-            if (args[1].equalsIgnoreCase("true")
-                || args[1].equalsIgnoreCase("false")) {
-                displayData = args[1].equalsIgnoreCase("true");
-            }
-            else {
-                ps = new PrintStream(
-                    new BufferedOutputStream(
-                        new FileOutputStream(args[1], false)));
-            }
-        }
-        else if (args.length == 1) {
-            raf = new RandomAccessFile(args[0], "r");
-        }
-        else {
-            throw new IllegalArgumentException("unexpected arg count: " + Arrays.toString(args));
-        }
-
+        RandomAccessFile raf = new RandomAccessFile(options.getFile().getPath(), "r");
         raf.order(RandomAccessFile.BIG_ENDIAN);
-        // Create Grib2Input instance
         Grib2Input g2i = new Grib2Input(raf);
-        // boolean params getProductsOnly, oneRecord
-        g2i.scan(false, false);
+        if (!g2i.scan(false, false)) {
+            throw new IllegalArgumentException("Failed to successfully scan grib file.");
+        }
 
+        OutputStream out = options.getOutput() != null ?
+            new BufferedOutputStream(new FileOutputStream(options.getOutput(), false)) :
+            System.out;
 
         Map<String, Object> properties = new HashMap<>();
         properties.put(JsonGenerator.PRETTY_PRINTING, true);
         JsonGeneratorFactory jgf = Json.createGeneratorFactory(properties);
-        JsonGenerator jg = jgf.createGenerator(ps);
-        Grib2Data gd = new Grib2Data(raf);
+        JsonGenerator jg = jgf.createGenerator(out);
 
         jg.writeStartArray();
         boolean first = true;
 
-        // record contains objects for all 8 Grib2 sections
         List<Grib2Record> records = g2i.getRecords();
         for (Grib2Record record : records) {
 
             jg.writeStartObject();
 
-            RecordWriter rw = new RecordWriter(jg, record, true);
+            RecordWriter rw = new RecordWriter(jg, record, options.isNames());
             rw.writeHeader();
 
-            if (displayData && first) {
-                rw.writeData(gd);
+            if (options.isData() && first) {
+                rw.writeData(new Grib2Data(raf));
             }
 
             jg.writeEnd();
@@ -146,29 +107,34 @@ public class Driver {
         raf.close();
     }
 
-    /**
-     * Dump of content of the Grib2 file to text.
-     *
-     * @param args Gribfile,  [output file], [true|false] output data.
-     */
     public static void main(String args[]) {
-
-        // Function References
-        Driver g2d = new Driver();
-
-        // Test usage
-        if (args.length < 1) {
-            // Get class name as String
-            Class cl = g2d.getClass();
-            Driver.usage(cl.getName());
-            return;
-        }
-
         try {
-            g2d.gribDump(args);
+            Cli<Options> cli = CliFactory.createCli(Options.class);
+            Options options;
+            try {
+                options = CliFactory.parseArguments(Options.class, args);
+                if (options.isHelp()) {
+                    System.out.println(cli.getHelpMessage());
+                    return;
+                }
+            }
+            catch (JewelRuntimeException t) {
+                System.out.println(cli.getHelpMessage());
+                System.out.println();
+                System.err.println(t.getMessage());
+                System.exit(-1);
+                return;
+            }
+
+            gribDump(options);
+        }
+        catch (IllegalArgumentException e) {
+            System.err.println(e.getMessage());
+            System.exit(-1);
         }
         catch (Throwable t) {
-            System.err.println(t);
+            t.printStackTrace(System.err);
+            System.exit(-2);
         }
     }
 }

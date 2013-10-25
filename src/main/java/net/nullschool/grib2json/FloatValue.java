@@ -13,7 +13,7 @@ import java.math.BigInteger;
 final class FloatValue implements JsonNumber {
 
     private final float value;
-    private transient BigDecimal bd;
+    private BigDecimal bd;
 
     FloatValue(float value) {
         this.value = value;
