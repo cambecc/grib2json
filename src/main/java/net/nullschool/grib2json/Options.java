@@ -26,6 +26,6 @@ interface Options {
     @Option(shortName="o", description="write output to file", defaultToNull=true)
     File getOutput();
 
-    @Unparsed(name="FILE")
+    @Unparsed(name="FILE", defaultToNull=true)
     File getFile();
 }

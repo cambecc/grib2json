@@ -34,7 +34,6 @@
 package net.nullschool.grib2json;
 
 import com.lexicalscope.jewel.JewelRuntimeException;
-import com.lexicalscope.jewel.cli.Cli;
 import com.lexicalscope.jewel.cli.CliFactory;
 import ucar.grib.grib2.*;
 
@@ -54,7 +53,11 @@ import javax.json.stream.JsonGeneratorFactory;
  *
  * @author Cameron Beccario
  */
-class Driver {
+class Launcher {
+
+    static void printUsage() {
+        System.out.println(CliFactory.createCli(Options.class).getHelpMessage());
+    }
 
     static void validateOptions(Options options) {
         Path path = options.getFile().toPath();
@@ -109,17 +112,16 @@ class Driver {
 
     public static void main(String args[]) {
         try {
-            Cli<Options> cli = CliFactory.createCli(Options.class);
             Options options;
             try {
                 options = CliFactory.parseArguments(Options.class, args);
-                if (options.isHelp()) {
-                    System.out.println(cli.getHelpMessage());
+                if (options.isHelp() || options.getFile() == null) {
+                    printUsage();
                     return;
                 }
             }
             catch (JewelRuntimeException t) {
-                System.out.println(cli.getHelpMessage());
+                printUsage();
                 System.out.println();
                 System.err.println(t.getMessage());
                 System.exit(-1);
