@@ -29,7 +29,7 @@ public interface Options {
     @Option(shortName="v", description="enable logging")
     boolean isVerbose();
 
-    @Option(shortName="o", description="write output to file", defaultToNull=true)
+    @Option(shortName="o", description="print to specified file", defaultToNull=true)
     File getOutput();
 
     @Unparsed(name="FILE", defaultToNull=true)
