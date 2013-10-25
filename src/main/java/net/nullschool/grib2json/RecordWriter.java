@@ -40,6 +40,14 @@ final class RecordWriter {
         this.options = options;
     }
 
+    boolean isSelected() {
+        return
+            (options.getFilterCategory() == null  || options.getFilterCategory() == pds.getParameterCategory()) &&
+            (options.getFilterParameter() == null || options.getFilterParameter() == pds.getParameterNumber()) &&
+            (options.getFilterSurface() == null   || options.getFilterSurface() == pds.getLevelType1()) &&
+            (options.getFilterValue() == null     || options.getFilterValue() == pds.getLevelValue1());
+    }
+
     private boolean isUnique(String key) {
         return keys.add(key);
     }

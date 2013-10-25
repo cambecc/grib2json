@@ -51,13 +51,15 @@ public final class Grib2Json {
 
         List<Grib2Record> records = input.getRecords();
         for (Grib2Record record : records) {
-            jg.writeStartObject();
             RecordWriter rw = new RecordWriter(jg, record, options);
-            rw.writeHeader();
-            if (options.isData()) {
-                rw.writeData(new Grib2Data(raf));
+            if (rw.isSelected()) {
+                jg.writeStartObject();
+                rw.writeHeader();
+                if (options.isData()) {
+                    rw.writeData(new Grib2Data(raf));
+                }
+                jg.writeEnd();
             }
-            jg.writeEnd();
         }
 
         jg.writeEnd();
