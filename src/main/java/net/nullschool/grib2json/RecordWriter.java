@@ -19,7 +19,7 @@ import static ucar.grib.GribNumbers.*;
  *
  * Writes a Grib2 record to a JSON generator.
  *
- * This class was initially based on Grib2Dump, part of the NetCDF Java library written by University
+ * This class was initially based on Grib2Dump, part of the netCDF-Java library written by University
  * Corporation for Atmospheric Research/Unidata. However, what appears below is a complete rewrite.
  *
  * @author Cameron Beccario

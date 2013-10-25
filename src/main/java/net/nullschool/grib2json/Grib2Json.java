@@ -14,9 +14,9 @@ import static java.util.Collections.*;
 /**
  * 2013-10-25<p/>
  *
- * Converts a GRIB2 file to Json. GRIB2 decoding is performed by the NetCDF GRIB decoder.
+ * Converts a GRIB2 file to Json. GRIB2 decoding is performed by the netCDF-Java GRIB decoder.
  *
- * This class was initially based on Grib2Dump, part of the NetCDF Java library written by University
+ * This class was initially based on Grib2Dump, part of the netCDF-Java library written by University
  * Corporation for Atmospheric Research/Unidata. However, what appears below is a complete rewrite.
  *
  * @author Cameron Beccario
