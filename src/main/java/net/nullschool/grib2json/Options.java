@@ -14,7 +14,7 @@ import java.io.File;
 @CommandLineInterface(application="grib2json")
 public interface Options {
 
-    @Option(shortName="h", description="display help")
+    @Option(shortName={"h", "?"}, description="display help")
     boolean isHelp();
 
     @Option(shortName="n", description="print names of codes")
