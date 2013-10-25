@@ -3,7 +3,8 @@ grib2json
 
 A command line utility that decodes [GRIB2](http://en.wikipedia.org/wiki/GRIB) files as JSON.
 
-This utility uses the netCDF-Java GRIB decoder, part of the [THREDDS](https://github.com/Unidata/thredds) project.
+This utility uses the netCDF-Java GRIB decoder, part of the [THREDDS](https://github.com/Unidata/thredds) project
+by University Corporation for Atmospheric Research/Unidata.
 
 Installation
 ------------
@@ -36,8 +37,9 @@ Usage: grib2json [options] FILE
 	[--verbose -v] : enable logging to stdout
 ```
 
-For example, the following command outputs the records for parameter 2 (U-component_of_wind), with
-surface type 103 (Specified height level above ground), and surface value 10.0 meters:
+For example, the following command outputs to stdout the records for parameter 2 (U-component_of_wind), with
+surface type 103 (Specified height level above ground), and surface value 10.0 meters from the GRIB2 file
+_gfs.t18z.pgrbf00.2p5deg.grib2_. Notice the optional inclusion of human-readable _xyzName_ keys:
 
 ```
 > grib2json --fp 2 --fs 103 --fv 10.0 --names gfs.t18z.pgrbf00.2p5deg.grib2
@@ -51,7 +53,12 @@ surface type 103 (Specified height level above ground), and surface value 10.0 m
             "gribLength":27759,
             "center":7,
             "centerName":"US National Weather Service - NCEP(WMC)",
-            "subcenter":0,
+            "parameterNumber":2,
+            "parameterNumberName":"U-component_of_wind",
+            "parameterUnit":"m.s-1",
+            "surface1Type":103,
+            "surface1TypeName":"Specified height level above ground",
+            "surface1Value":10.0,
             ...
         }
     }
