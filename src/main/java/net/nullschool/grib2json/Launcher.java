@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 /**
  * 2013-10-24<p/>
  *
+ * Execution shim for the grib2json utility. Parses command line options and invokes the {@link Grib2Json} converter.
+ *
  * @author Cameron Beccario
  */
 class Launcher {
@@ -30,13 +32,13 @@ class Launcher {
                 return;
             }
 
-            if (options.isHelp() || options.getFile() == null) {
+            if (options.getShowHelp() || options.getFile() == null) {
                 printUsage();
                 return;
             }
 
             LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-            if (!options.isVerbose()) {
+            if (!options.getEnableLogging()) {
                 lc.stop();
             }
 

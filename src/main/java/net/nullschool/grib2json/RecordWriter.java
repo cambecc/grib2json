@@ -3,6 +3,7 @@ package net.nullschool.grib2json;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import ucar.grib.grib2.*;
+import ucar.grib.GribNumbers;
 
 import javax.json.stream.JsonGenerator;
 import java.io.IOException;
@@ -16,6 +17,11 @@ import static ucar.grib.GribNumbers.*;
 /**
  * 2013-10-25<p/>
  *
+ * Writes a Grib2 record to a JSON generator.
+ *
+ * This class was initially based on Grib2Dump, part of the NetCDF Java library written by University
+ * Corporation for Atmospheric Research/Unidata. However, what appears below is a complete rewrite.
+ *
  * @author Cameron Beccario
  */
 final class RecordWriter {
@@ -28,8 +34,6 @@ final class RecordWriter {
     private final Grib2GDSVariables gds;
     private final Options options;
 
-    private Set<String> keys = new HashSet<>();
-
     RecordWriter(JsonGenerator jg, Grib2Record record, Options options) {
         this.jg = Objects.requireNonNull(jg);
         this.record = record;
@@ -40,6 +44,9 @@ final class RecordWriter {
         this.options = options;
     }
 
+    /**
+     * Return true if the specified command line options do not filter out this record.
+     */
     boolean isSelected() {
         return
             (options.getFilterCategory() == null  || options.getFilterCategory() == pds.getParameterCategory()) &&
@@ -48,131 +55,155 @@ final class RecordWriter {
             (options.getFilterValue() == null     || options.getFilterValue() == pds.getLevelValue1());
     }
 
-    private boolean isUnique(String key) {
-        return keys.add(key);
+    /**
+     * Write a "key":int Json pair.
+     */
+    private void write(String key, int value) {
+        jg.write(key, value);
     }
 
-    private void write(String name, int value) {
-        assert isUnique(name);
-        jg.write(name, value);
-    }
-
-    private void writeIfSet(String name, int value) {
-        assert isUnique(name);
+    /**
+     * Write a "key":int Json pair only if the value is not {@link GribNumbers#UNDEFINED}.
+     */
+    private void writeIfSet(String key, int value) {
         if (value != UNDEFINED) {
-            jg.write(name, value);
+            jg.write(key, value);
         }
     }
 
-    private void write(String name, long value) {
-        assert isUnique(name);
-        jg.write(name, value);
+    /**
+     * Write a "key":long Json pair.
+     */
+    private void write(String key, long value) {
+        jg.write(key, value);
     }
 
-    private void write(String name, float value) {
-        assert isUnique(name);
-        jg.write(name, new FloatValue(value));
+    /**
+     * Write a "key":float Json pair.
+     */
+    private void write(String key, float value) {
+        jg.write(key, new FloatValue(value));
     }
 
-    private void writeIfSet(String name, float value) {
-        assert isUnique(name);
+    /**
+     * Write a "key":float Json pair only if the value is not {@link GribNumbers#UNDEFINED}.
+     */
+    private void writeIfSet(String key, float value) {
         if (value != UNDEFINED) {
-            jg.write(name, new FloatValue(value));
+            jg.write(key, new FloatValue(value));
         }
     }
 
-    private void write(String name, double value) {
-        assert isUnique(name);
-        jg.write(name, value);
+    /**
+     * Write a "key":double Json pair.
+     */
+    private void write(String key, double value) {
+        jg.write(key, value);
     }
 
-    private void write(String name, String value) {
-        assert isUnique(name);
-        jg.write(name, value);
+    /**
+     * Write a "key":"value" Json pair.
+     */
+    private void write(String key, String value) {
+        jg.write(key, value);
     }
 
-    private void write(String name, int code, String description) {
-        write(name, code);
-        if (options.isNames()) {
-            write(name + "Name", description);
+    /**
+     * Write a "key":"value" Json pair, and a second "keyName":"name" pair if the command line options
+     * have name printing enabled.
+     */
+    private void write(String key, int code, String name) {
+        write(key, code);
+        if (options.getPrintNames()) {
+            write(key + "Name", name);
         }
     }
 
+    /**
+     * Write contents of the record's indicator section.
+     */
     private void writeIndicator() {
         write("discipline", ins.getDiscipline(), ins.getDisciplineName());
         write("gribEdition", ins.getGribEdition());
         write("gribLength", ins.getGribLength());
     }
 
+    /**
+     * Write contents of the record's identification section.
+     */
     private void writeIdentification() {
-        write("center_id", ids.getCenter_id(), getCenter_idName(ids.getCenter_id()));  // Originating Center
-        write("subcenter_id", ids.getSubcenter_id());  // Originating Sub-Center
-        write("refTime", new DateTime(ids.getRefTime()).withZone(DateTimeZone.UTC).toString());  // Reference Time
-        write("significanceOfRT", ids.getSignificanceOfRT(), ids.getSignificanceOfRTName()); // Significance of Reference Time
+        write("center", ids.getCenter_id(), getCenter_idName(ids.getCenter_id()));
+        write("subcenter", ids.getSubcenter_id());
+        write("refTime", new DateTime(ids.getRefTime()).withZone(DateTimeZone.UTC).toString());
+        write("significanceOfRT", ids.getSignificanceOfRT(), ids.getSignificanceOfRTName());
         write("productStatus", ids.getProductStatus(), ids.getProductStatusName());
         write("productType", ids.getProductType(), ids.getProductTypeName());
     }
 
+    /**
+     * Write contents of the record's product section.
+     */
     private void writeProduct() {
         final int productDef = pds.getProductDefinitionTemplate();
         final int discipline = ins.getDiscipline();
         final int paramCategory = pds.getParameterCategory();
         final int paramNumber = pds.getParameterNumber();
 
-        write("productDefinition", productDef, codeTable4_0(productDef));
+        write("productDefinitionTemplate", productDef, codeTable4_0(productDef));
         write("parameterCategory", paramCategory, getCategoryName(discipline, paramCategory));
-        write("parameter", paramNumber, getParameterName(discipline, paramCategory, paramNumber));
+        write("parameterNumber", paramNumber, getParameterName(discipline, paramCategory, paramNumber));
         write("parameterUnit", getParameterUnit(discipline, paramCategory, paramNumber));
-        write("genProcessType", pds.getGenProcessType(), codeTable4_3(pds.getGenProcessType()));  // Generating Process Type
+        write("genProcessType", pds.getGenProcessType(), codeTable4_3(pds.getGenProcessType()));
         write("forecastTime", pds.getForecastTime());
-        write("levelType1", pds.getLevelType1(), codeTable4_5(pds.getLevelType1()));  // First Surface Type
-        write("levelValue1", pds.getLevelValue1());
-        write("levelType2", pds.getLevelType2(), codeTable4_5(pds.getLevelType2()));  // Second Surface Type
-        write("levelValue2", pds.getLevelValue2());
+        write("surface1Type", pds.getLevelType1(), codeTable4_5(pds.getLevelType1()));
+        write("surface1Value", pds.getLevelValue1());
+        write("surface2Type", pds.getLevelType2(), codeTable4_5(pds.getLevelType2()));
+        write("surface2Value", pds.getLevelValue2());
     }
 
     private void writeGridShape() {
-        write("shape", gds.getShape(), codeTable3_2(gds.getShape()));  // grid shape
+        // See http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_table3-2.shtml
+        write("shape", gds.getShape(), codeTable3_2(gds.getShape()));
         switch (gds.getShape()) {
-            case 1:
-                write("earthRadius", gds.getEarthRadius());  // Spherical earth radius
+            case 1:  // Earth assumed spherical with radius specified (in m) by data producer
+                write("earthRadius", gds.getEarthRadius());
                 break;
-            case 3:
-                write("majorAxis", gds.getMajorAxis());  // Oblate earth major axis
-                write("minorAxis", gds.getMinorAxis());  // Oblate earth minor axis
+            case 3:  // Earth assumed oblate spheroid with major and minor axes specified (in km) by data producer
+                write("majorAxis", gds.getMajorAxis());
+                write("minorAxis", gds.getMinorAxis());
                 break;
         }
     }
 
     private void writeGridSize() {
         write("gridUnits", gds.getGridUnits());
-        write("resolution", gds.getResolution());  // Resolution & Component flags
+        write("resolution", gds.getResolution());
         write("winds", isBitSet(gds.getResolution(), BIT_5) ? "relative" : "true");
         write("scanMode", gds.getScanMode());
-        write("nx", gds.getNx());  // Number of points along parallel
-        write("ny", gds.getNy());  // Number of points along meridian
+        write("nx", gds.getNx());  // Number of points on x-axis or parallel
+        write("ny", gds.getNy());  // Number of points on y-axis or meridian
     }
 
     private void writeLatLongBounds() {
-        writeIfSet("la1", gds.getLa1());  // Latitude of first grid point
-        writeIfSet("lo1", gds.getLo1());  // Longitude of first grid point
-        writeIfSet("la2", gds.getLa2());  // Latitude of last grid point
-        writeIfSet("lo2", gds.getLo2());  // Longitude of last grid point
+        writeIfSet("la1", gds.getLa1());  // latitude of first grid point
+        writeIfSet("lo1", gds.getLo1());  // longitude of first grid point
+        writeIfSet("la2", gds.getLa2());  // latitude of last grid point
+        writeIfSet("lo2", gds.getLo2());  // longitude of last grid point
         writeIfSet("dx", gds.getDx());    // i direction increment
         writeIfSet("dy", gds.getDy());    // j direction increment
     }
 
     private void writeRotationAndStretch() {
-        writeIfSet("spLat", gds.getSpLat());  // Latitude of southern pole
-        writeIfSet("spLon", gds.getSpLon());  // Longitude of southern pole
+        writeIfSet("spLat", gds.getSpLat());  // latitude of the southern pole of projection
+        writeIfSet("spLon", gds.getSpLon());  // longitude of the southern pole of projection
         writeIfSet("rotationAngle", gds.getRotationAngle());
-        writeIfSet("poleLat", gds.getPoleLat());
-        writeIfSet("poleLon", gds.getPoleLon());
+        writeIfSet("poleLat", gds.getPoleLat());  // latitude of the pole of stretching
+        writeIfSet("poleLon", gds.getPoleLon());  // longitude of the pole stretching
         writeIfSet("stretchingFactor", gds.getStretchingFactor());
     }
 
     private void writeAngle() {
-        writeIfSet("angle", gds.getAngle());
+        writeIfSet("angle", gds.getAngle());  // orientation of the grid
         writeIfSet("basicAngle", gds.getBasicAngle());
         writeIfSet("subDivisions", gds.getSubDivisions());
     }
@@ -183,7 +214,7 @@ final class RecordWriter {
         writeAngle();
         writeLatLongBounds();
         writeRotationAndStretch();
-        writeIfSet("np", gds.getNp());  // Number of parallels
+        writeIfSet("np", gds.getNp());  // number of paralells between a pole and the equator
     }
 
     private void writeMercatorGrid() {
@@ -207,9 +238,9 @@ final class RecordWriter {
 
         write("laD", gds.getLaD());
         write("loV", gds.getLoV());
-        write("projectionFlag", gds.getProjectionFlag());  // projection center
-        write("latin1", gds.getLatin1());
-        write("latin2", gds.getLatin2());
+        write("projectionFlag", gds.getProjectionFlag());
+        write("latin1", gds.getLatin1());  // first latitude from the pole at which the secant cone cuts the sphere
+        write("latin2", gds.getLatin2());  // second latitude from the pole at which the secant cone cuts the sphere
     }
 
     private void writeSpaceOrOrthographicGrid() {
@@ -218,13 +249,13 @@ final class RecordWriter {
         writeAngle();
         writeLatLongBounds();
 
-        write("lap", gds.getLap());  // Latitude of sub-satellite point
-        write("lop", gds.getLop());  // Longitude of sub-satellite pt
-        write("xp", gds.getXp());    // Xp-coordinate of sub-satellite
-        write("yp", gds.getYp());    // Yp-coordinate of sub-satellite
-        write("nr", gds.getNr());    // Nr Altitude of the camera
-        write("xo", gds.getXo());    // Xo-coordinate of origin
-        write("yo", gds.getYo());    // Yo-coordinate of origin
+        write("lap", gds.getLap());  // latitude of sub-satellite point
+        write("lop", gds.getLop());  // longitude of sub-satellite point
+        write("xp", gds.getXp());    // x-coordinate of sub-satellite point
+        write("yp", gds.getYp());    // y-coordinate of sub-satellite point
+        write("nr", gds.getNr());    // altitude of the camera from the Earth's center
+        write("xo", gds.getXo());    // x-coordinate of origin of sector image
+        write("yo", gds.getYo());    // y-coordinate of origin of sector image
     }
 
     private void writeCurvilinearGrid() {
@@ -232,43 +263,50 @@ final class RecordWriter {
         writeGridSize();
     }
 
+    /**
+     * Write contents of the record's grid definition section.
+     * See http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_table3-1.shtml
+     */
     private void writeGridDefinition() {
         final int gridTemplate = gds.getGdtn();
 
-        write("gridDefinition", gridTemplate, codeTable3_1(gridTemplate));  // Grid Name
-        write("numberPoints", gds.getNumberPoints());  // Number of data points
+        write("gridDefinitionTemplate", gridTemplate, codeTable3_1(gridTemplate));
+        write("numberPoints", gds.getNumberPoints());
 
         switch (gridTemplate) {
-            case 0:
-            case 1:
-            case 2:
-            case 3:
+            case 0:  // Template 3.0
+            case 1:  // Template 3.1
+            case 2:  // Template 3.2
+            case 3:  // Template 3.3
                 writeLatLongGrid();
                 break;
-            case 10:
+            case 10:  // Template 3.10
                 writeMercatorGrid();
                 break;
-            case 20:
+            case 20:  // Template 3.20
                 writePolarStereographicGrid();
                 break;
-            case 30:
+            case 30:  // Template 3.30
                 writeLambertConformalGrid();
                 break;
-            case 40:
-            case 41:
-            case 42:
-            case 43:
+            case 40:  // Template 3.40
+            case 41:  // Template 3.41
+            case 42:  // Template 3.42
+            case 43:  // Template 3.43
                 writeLatLongGrid();
                 break;
-            case 90:
+            case 90:  // Template 3.90
                 writeSpaceOrOrthographicGrid();
                 break;
-            case 204:
+            case 204:  // Template 3.204
                 writeCurvilinearGrid();
                 break;
         }
     }
 
+    /**
+     * Write the record's header as a Json object: "header": { ... }
+     */
     void writeHeader() {
         jg.writeStartObject("header");
         writeIndicator();
@@ -278,6 +316,9 @@ final class RecordWriter {
         jg.writeEnd();
     }
 
+    /**
+     * Write the record's data as a Json array: "data": [ ... ]
+     */
     void writeData(Grib2Data gd) throws IOException {
         float[] data = gd.getData(record.getGdsOffset(), record.getPdsOffset(), ids.getRefTime());
         if (data != null) {

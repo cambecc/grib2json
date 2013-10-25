@@ -8,6 +8,12 @@ import java.math.BigInteger;
 /**
  * 2013-10-24<p/>
  *
+ * A Json float value. This class uses Float.toString to produce the Json text for a float. This avoids the
+ * noise caused by the default JsonGenerator when it widens to double.
+ *
+ * This class also defines the Json representations for NaN, Infinity, and -Infinity to be their equivalent
+ * String representations. For example: [1.0, 2.3, "NaN", 0.7, "Infinity"]
+ *
  * @author Cameron Beccario
  */
 final class FloatValue implements JsonNumber {

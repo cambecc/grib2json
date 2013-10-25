@@ -18,15 +18,13 @@
     <url>https://github.com/cambecc/grib2json</url>
     <inceptionYear>2013</inceptionYear>
 
-<!--
     <licenses>
         <license>
-            <name>CC0 1.0 Universal</name>
-            <url>http://creativecommons.org/publicdomain/zero/1.0/</url>
+            <name>The MIT License (MIT)</name>
+            <url>http://opensource.org/licenses/MIT</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
--->
 
     <developers>
         <developer>

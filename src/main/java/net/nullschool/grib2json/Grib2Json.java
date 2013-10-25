@@ -14,6 +14,11 @@ import static java.util.Collections.*;
 /**
  * 2013-10-25<p/>
  *
+ * Converts a GRIB2 file to Json. GRIB2 decoding is performed by the NetCDF GRIB decoder.
+ *
+ * This class was initially based on Grib2Dump, part of the NetCDF Java library written by University
+ * Corporation for Atmospheric Research/Unidata. However, what appears below is a complete rewrite.
+ *
  * @author Cameron Beccario
  */
 public final class Grib2Json {
@@ -27,6 +32,9 @@ public final class Grib2Json {
         this.options = options;
     }
 
+    /**
+     * Convert the GRIB2 file to Json as specified by the command line options.
+     */
     public void write() throws IOException {
 
         RandomAccessFile raf = new RandomAccessFile(options.getFile().getPath(), "r");
@@ -42,7 +50,7 @@ public final class Grib2Json {
 
         JsonGeneratorFactory jgf =
             Json.createGeneratorFactory(
-                options.isCompact() ?
+                options.isCompactFormat() ?
                     null :
                     singletonMap(JsonGenerator.PRETTY_PRINTING, true));
         JsonGenerator jg = jgf.createGenerator(output);
@@ -55,7 +63,7 @@ public final class Grib2Json {
             if (rw.isSelected()) {
                 jg.writeStartObject();
                 rw.writeHeader();
-                if (options.isData()) {
+                if (options.getPrintData()) {
                     rw.writeData(new Grib2Data(raf));
                 }
                 jg.writeEnd();

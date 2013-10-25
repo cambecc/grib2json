@@ -8,28 +8,29 @@ import java.io.File;
 /**
  * 2013-10-25<p/>
  *
+ * Command line options for the grib2json utility. This interface is proxied by the Jewel Cli options parsing library.
+ *
  * @author Cameron Beccario
  */
-
 @CommandLineInterface(application="grib2json")
 public interface Options {
 
-    @Option(shortName={"h", "?"}, description="display help")
-    boolean isHelp();
+    @Option(longName="help", shortName={"h", "?"}, description="display help")
+    boolean getShowHelp();
 
-    @Option(shortName="n", description="print names of codes")
-    boolean isNames();
+    @Option(longName="names", shortName="n", description="print names of the numeric codes")
+    boolean getPrintNames();
 
-    @Option(shortName="d", description="print record data")
-    boolean isData();
+    @Option(longName="data", shortName="d", description="print record data")
+    boolean getPrintData();
 
-    @Option(shortName="c", description="enable compact formatting")
-    boolean isCompact();
+    @Option(longName="compact", shortName="c", description="enable compact formatting")
+    boolean isCompactFormat();
 
-    @Option(shortName="v", description="enable logging")
-    boolean isVerbose();
+    @Option(longName="verbose", shortName="v", description="enable logging")
+    boolean getEnableLogging();
 
-    @Option(shortName="o", description="print to specified file", defaultToNull=true)
+    @Option(longName="output", shortName="o", description="print to specified file", defaultToNull=true)
     File getOutput();
 
     @Unparsed(name="FILE", defaultToNull=true)
