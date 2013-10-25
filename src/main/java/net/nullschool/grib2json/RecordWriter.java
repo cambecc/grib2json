@@ -26,18 +26,18 @@ final class RecordWriter {
     private final Grib2IdentificationSection ids;
     private final Grib2Pds pds;
     private final Grib2GDSVariables gds;
-    private final boolean includeCodeDescriptions;
+    private final Options options;
 
     private Set<String> keys = new HashSet<>();
 
-    RecordWriter(JsonGenerator jg, Grib2Record record, boolean includeCodeDescriptions) {
+    RecordWriter(JsonGenerator jg, Grib2Record record, Options options) {
         this.jg = Objects.requireNonNull(jg);
         this.record = record;
         this.ins = record.getIs();
         this.ids = record.getId();
         this.pds = record.getPDS().getPdsVars();
         this.gds = record.getGDS().getGdsVars();
-        this.includeCodeDescriptions = includeCodeDescriptions;
+        this.options = options;
     }
 
     private boolean isUnique(String key) {
@@ -85,7 +85,7 @@ final class RecordWriter {
 
     private void write(String name, int code, String description) {
         write(name, code);
-        if (includeCodeDescriptions) {
+        if (options.isNames()) {
             write(name + "Name", description);
         }
     }

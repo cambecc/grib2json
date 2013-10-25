@@ -12,7 +12,10 @@ import java.io.File;
  */
 
 @CommandLineInterface(application="grib2json")
-interface Options {
+public interface Options {
+
+    @Option(description="display help")
+    boolean isHelp();
 
     @Option(shortName="n", description="print names of codes")
     boolean isNames();
@@ -20,8 +23,8 @@ interface Options {
     @Option(shortName="d", description="print record data")
     boolean isData();
 
-    @Option(description="display help")
-    boolean isHelp();
+    @Option(shortName="c", description="enable compact formatting")
+    boolean isCompact();
 
     @Option(shortName="o", description="write output to file", defaultToNull=true)
     File getOutput();

@@ -15,7 +15,7 @@ public class LauncherTest {
 //        Launcher.main(new String[] {"c:/users/cambecc/desktop/gfs/gfs.t18z.pgrb2f00", "out.txt", "true"});
 //        Launcher.main(new String[] {"c:/users/cambecc/desktop/gfs/gfs.t18z.pgrbf00.2p5deg.grib2", "out.txt", "false"});
 
-//        String args = "--help -d c:/users/cambecc/desktop/gfs/gfs.t18z.pgrbf00.2p5deg.grib2";
+//        String args = "--help c:/users/cambecc/desktop/gfs/gfs.t18z.pgrbf00.2p5deg.grib2";
 //        Launcher.main(args.split(" "));
     }
 }
