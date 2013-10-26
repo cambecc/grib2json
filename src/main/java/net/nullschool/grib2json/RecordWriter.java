@@ -184,21 +184,21 @@ final class RecordWriter {
         write("ny", gds.getNy());  // Number of points on y-axis or meridian
     }
 
-    private void writeLatLongBounds() {
-        writeIfSet("la1", gds.getLa1());  // latitude of first grid point
+    private void writeLonLatBounds() {
         writeIfSet("lo1", gds.getLo1());  // longitude of first grid point
-        writeIfSet("la2", gds.getLa2());  // latitude of last grid point
+        writeIfSet("la1", gds.getLa1());  // latitude of first grid point
         writeIfSet("lo2", gds.getLo2());  // longitude of last grid point
+        writeIfSet("la2", gds.getLa2());  // latitude of last grid point
         writeIfSet("dx", gds.getDx());    // i direction increment
         writeIfSet("dy", gds.getDy());    // j direction increment
     }
 
     private void writeRotationAndStretch() {
-        writeIfSet("spLat", gds.getSpLat());  // latitude of the southern pole of projection
         writeIfSet("spLon", gds.getSpLon());  // longitude of the southern pole of projection
+        writeIfSet("spLat", gds.getSpLat());  // latitude of the southern pole of projection
         writeIfSet("rotationAngle", gds.getRotationAngle());
-        writeIfSet("poleLat", gds.getPoleLat());  // latitude of the pole of stretching
         writeIfSet("poleLon", gds.getPoleLon());  // longitude of the pole stretching
+        writeIfSet("poleLat", gds.getPoleLat());  // latitude of the pole of stretching
         writeIfSet("stretchingFactor", gds.getStretchingFactor());
     }
 
@@ -208,11 +208,11 @@ final class RecordWriter {
         writeIfSet("subDivisions", gds.getSubDivisions());
     }
 
-    private void writeLatLongGrid() {
+    private void writeLonLatGrid() {
         writeGridShape();
         writeGridSize();
         writeAngle();
-        writeLatLongBounds();
+        writeLonLatBounds();
         writeRotationAndStretch();
         writeIfSet("np", gds.getNp());  // number of paralells between a pole and the equator
     }
@@ -221,19 +221,19 @@ final class RecordWriter {
         writeGridShape();
         writeGridSize();
         writeAngle();
-        writeLatLongBounds();
+        writeLonLatBounds();
     }
 
     private void writePolarStereographicGrid() {
         writeGridShape();
         writeGridSize();
-        writeLatLongBounds();
+        writeLonLatBounds();
     }
 
     private void writeLambertConformalGrid() {
         writeGridShape();
         writeGridSize();
-        writeLatLongBounds();
+        writeLonLatBounds();
         writeRotationAndStretch();
 
         write("laD", gds.getLaD());
@@ -247,10 +247,10 @@ final class RecordWriter {
         writeGridShape();
         writeGridSize();
         writeAngle();
-        writeLatLongBounds();
+        writeLonLatBounds();
 
-        write("lap", gds.getLap());  // latitude of sub-satellite point
         write("lop", gds.getLop());  // longitude of sub-satellite point
+        write("lap", gds.getLap());  // latitude of sub-satellite point
         write("xp", gds.getXp());    // x-coordinate of sub-satellite point
         write("yp", gds.getYp());    // y-coordinate of sub-satellite point
         write("nr", gds.getNr());    // altitude of the camera from the Earth's center
@@ -278,7 +278,7 @@ final class RecordWriter {
             case 1:  // Template 3.1
             case 2:  // Template 3.2
             case 3:  // Template 3.3
-                writeLatLongGrid();
+                writeLonLatGrid();
                 break;
             case 10:  // Template 3.10
                 writeMercatorGrid();
@@ -293,7 +293,7 @@ final class RecordWriter {
             case 41:  // Template 3.41
             case 42:  // Template 3.42
             case 43:  // Template 3.43
-                writeLatLongGrid();
+                writeLonLatGrid();
                 break;
             case 90:  // Template 3.90
                 writeSpaceOrOrthographicGrid();
