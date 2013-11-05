@@ -44,15 +44,27 @@ final class RecordWriter {
         this.options = options;
     }
 
+    private boolean isSelected(String filterParameter) {
+        try {
+            return
+                filterParameter == null ||
+                "wind".equals(filterParameter) && (pds.getParameterNumber() == 2 || pds.getParameterNumber() == 3) ||
+                Integer.parseInt(filterParameter) == pds.getParameterNumber();
+        }
+        catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
     /**
      * Return true if the specified command line options do not filter out this record.
      */
     boolean isSelected() {
         return
-            (options.getFilterCategory() == null  || options.getFilterCategory() == pds.getParameterCategory()) &&
-            (options.getFilterParameter() == null || options.getFilterParameter() == pds.getParameterNumber()) &&
-            (options.getFilterSurface() == null   || options.getFilterSurface() == pds.getLevelType1()) &&
-            (options.getFilterValue() == null     || options.getFilterValue() == pds.getLevelValue1());
+            (options.getFilterCategory() == null || options.getFilterCategory() == pds.getParameterCategory()) &&
+            (options.getFilterSurface() == null  || options.getFilterSurface() == pds.getLevelType1()) &&
+            (options.getFilterValue() == null    || options.getFilterValue() == pds.getLevelValue1()) &&
+            isSelected(options.getFilterParameter());
     }
 
     /**

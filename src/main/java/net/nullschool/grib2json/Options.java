@@ -51,9 +51,9 @@ public interface Options {
 
     @Option(
         longName={"filter.parameter", "fp"},
-        description="select records with this numeric parameter",
+        description="select records with this numeric parameter, or the string \"wind\" for both u,v components",
         defaultToNull=true)
-    Integer getFilterParameter();
+    String getFilterParameter();
 
     @Option(
         longName={"filter.surface", "fs"},
