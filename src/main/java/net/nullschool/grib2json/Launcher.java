@@ -28,12 +28,13 @@ class Launcher {
                 printUsage();
                 System.out.println();
                 System.err.println(t.getMessage());
-                System.exit(-1);
+                System.exit(1);
                 return;
             }
 
             if (options.getShowHelp() || options.getFile() == null) {
                 printUsage();
+                System.exit(options.getShowHelp() ? 0 : 1);
                 return;
             }
 
@@ -46,11 +47,11 @@ class Launcher {
         }
         catch (IllegalArgumentException e) {
             System.err.println(e.getMessage());
-            System.exit(-1);
+            System.exit(1);
         }
         catch (Throwable t) {
             t.printStackTrace(System.err);
-            System.exit(-2);
+            System.exit(2);
         }
     }
 }
