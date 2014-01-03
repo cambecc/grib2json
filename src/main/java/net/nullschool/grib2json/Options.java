@@ -66,4 +66,11 @@ public interface Options {
         description="select records with this numeric surface value",
         defaultToNull=true)
     Double getFilterValue();
+
+    @Option(
+        longName="recipe",
+        shortName="r",
+        description="a file containing a batch of filter options: fc, fp, fs, fv, and o",
+        defaultToNull=true)
+    File getRecipe();
 }

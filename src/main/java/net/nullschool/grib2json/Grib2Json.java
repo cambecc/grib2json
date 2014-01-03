@@ -23,36 +23,28 @@ import static java.util.Collections.*;
  */
 public final class Grib2Json {
 
-    private final Options options;
+    private final File gribFile;
+    private final List<Options> optionGroups;
 
-    public Grib2Json(Options options) {
-        if (!options.getFile().exists()) {
-            throw new IllegalArgumentException("Cannot find input file: " + options.getFile());
+    public Grib2Json(File gribFile, List<Options> optionGroups) {
+        if (!gribFile.exists()) {
+            throw new IllegalArgumentException("Cannot find input file: " + gribFile);
         }
-        this.options = options;
+        this.gribFile = gribFile;
+        this.optionGroups = optionGroups;
     }
 
-    /**
-     * Convert the GRIB2 file to Json as specified by the command line options.
-     */
-    public void write() throws IOException {
-
-        RandomAccessFile raf = new RandomAccessFile(options.getFile().getPath(), "r");
-        raf.order(RandomAccessFile.BIG_ENDIAN);
-        Grib2Input input = new Grib2Input(raf);
-        if (!input.scan(false, false)) {
-            throw new IllegalArgumentException("Failed to successfully scan grib file.");
-        }
-
-        OutputStream output = options.getOutput() != null ?
-            new BufferedOutputStream(new FileOutputStream(options.getOutput(), false)) :
-            System.out;
-
+    private void write(RandomAccessFile raf, Grib2Input input, Options options) throws IOException {
         JsonGeneratorFactory jgf =
             Json.createGeneratorFactory(
                 options.isCompactFormat() ?
                     null :
                     singletonMap(JsonGenerator.PRETTY_PRINTING, true));
+
+        OutputStream output = options.getOutput() != null ?
+            new BufferedOutputStream(new FileOutputStream(options.getOutput(), false)) :
+            System.out;
+
         JsonGenerator jg = jgf.createGenerator(output);
 
         jg.writeStartArray();
@@ -71,8 +63,25 @@ public final class Grib2Json {
         }
 
         jg.writeEnd();
-
         jg.close();
+    }
+
+    /**
+     * Convert the GRIB2 file to Json as specified by the command line options.
+     */
+    public void write() throws IOException {
+
+        RandomAccessFile raf = new RandomAccessFile(gribFile.getPath(), "r");
+        raf.order(RandomAccessFile.BIG_ENDIAN);
+        Grib2Input input = new Grib2Input(raf);
+        if (!input.scan(false, false)) {
+            throw new IllegalArgumentException("Failed to successfully scan grib file.");
+        }
+
+        for (Options options : optionGroups) {
+            write(raf, input, options);
+        }
+
         raf.close();
     }
 }
