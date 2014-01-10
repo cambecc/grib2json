@@ -44,6 +44,12 @@ public interface Options {
     // options to perform filtering
 
     @Option(
+        longName={"filter.discipline", "fd"},
+        description="select records with this discipline",
+        defaultToNull=true)
+    Integer getFilterDiscipline();
+
+    @Option(
         longName={"filter.category", "fc"},
         description="select records with this numeric category",
         defaultToNull=true)
@@ -70,7 +76,7 @@ public interface Options {
     @Option(
         longName="recipe",
         shortName="r",
-        description="a file containing a batch of filter options: fc, fp, fs, fv, and o",
+        description="a file containing a batch of filter options: fd, fc, fp, fs, fv, and o",
         defaultToNull=true)
     File getRecipe();
 }

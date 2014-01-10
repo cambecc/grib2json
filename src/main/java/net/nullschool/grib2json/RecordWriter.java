@@ -61,6 +61,7 @@ final class RecordWriter {
      */
     boolean isSelected() {
         return
+            (options.getFilterDiscipline() == null || options.getFilterDiscipline() == ins.getDiscipline()) &&
             (options.getFilterCategory() == null || options.getFilterCategory() == pds.getParameterCategory()) &&
             (options.getFilterSurface() == null  || options.getFilterSurface() == pds.getLevelType1()) &&
             (options.getFilterValue() == null    || options.getFilterValue() == pds.getLevelValue1()) &&
