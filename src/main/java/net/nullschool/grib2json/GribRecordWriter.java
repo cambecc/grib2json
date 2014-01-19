@@ -3,11 +3,9 @@ package net.nullschool.grib2json;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import ucar.grib.grib2.*;
-import ucar.grib.GribNumbers;
 
 import javax.json.stream.JsonGenerator;
 import java.io.IOException;
-import java.util.*;
 
 import static ucar.grib.grib1.Grib1Tables.*;
 import static ucar.grib.grib2.Grib2Tables.*;
@@ -24,24 +22,21 @@ import static ucar.grib.GribNumbers.*;
  *
  * @author Cameron Beccario
  */
-final class RecordWriter {
+final class GribRecordWriter extends AbstractRecordWriter {
 
-    private final JsonGenerator jg;
     private final Grib2Record record;
     private final Grib2IndicatorSection ins;
     private final Grib2IdentificationSection ids;
     private final Grib2Pds pds;
     private final Grib2GDSVariables gds;
-    private final Options options;
 
-    RecordWriter(JsonGenerator jg, Grib2Record record, Options options) {
-        this.jg = Objects.requireNonNull(jg);
+    GribRecordWriter(JsonGenerator jg, Grib2Record record, Options options) {
+        super(jg, options);
         this.record = record;
         this.ins = record.getIs();
         this.ids = record.getId();
         this.pds = record.getPDS().getPdsVars();
         this.gds = record.getGDS().getGdsVars();
-        this.options = options;
     }
 
     private boolean isSelected(String filterParameter) {
@@ -66,70 +61,6 @@ final class RecordWriter {
             (options.getFilterSurface() == null  || options.getFilterSurface() == pds.getLevelType1()) &&
             (options.getFilterValue() == null    || options.getFilterValue() == pds.getLevelValue1()) &&
             isSelected(options.getFilterParameter());
-    }
-
-    /**
-     * Write a "key":int Json pair.
-     */
-    private void write(String key, int value) {
-        jg.write(key, value);
-    }
-
-    /**
-     * Write a "key":int Json pair only if the value is not {@link GribNumbers#UNDEFINED}.
-     */
-    private void writeIfSet(String key, int value) {
-        if (value != UNDEFINED) {
-            jg.write(key, value);
-        }
-    }
-
-    /**
-     * Write a "key":long Json pair.
-     */
-    private void write(String key, long value) {
-        jg.write(key, value);
-    }
-
-    /**
-     * Write a "key":float Json pair.
-     */
-    private void write(String key, float value) {
-        jg.write(key, new FloatValue(value));
-    }
-
-    /**
-     * Write a "key":float Json pair only if the value is not {@link GribNumbers#UNDEFINED}.
-     */
-    private void writeIfSet(String key, float value) {
-        if (value != UNDEFINED) {
-            jg.write(key, new FloatValue(value));
-        }
-    }
-
-    /**
-     * Write a "key":double Json pair.
-     */
-    private void write(String key, double value) {
-        jg.write(key, value);
-    }
-
-    /**
-     * Write a "key":"value" Json pair.
-     */
-    private void write(String key, String value) {
-        jg.write(key, value);
-    }
-
-    /**
-     * Write a "key":"value" Json pair, and a second "keyName":"name" pair if the command line options
-     * have name printing enabled.
-     */
-    private void write(String key, int code, String name) {
-        write(key, code);
-        if (options.getPrintNames()) {
-            write(key + "Name", name);
-        }
     }
 
     /**

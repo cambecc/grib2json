@@ -1,6 +1,9 @@
 package net.nullschool.grib2json;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import ucar.grib.grib2.*;
+import ucar.nc2.NetcdfFile;
 import ucar.unidata.io.RandomAccessFile;
 
 import javax.json.Json;
@@ -23,18 +26,18 @@ import static java.util.Collections.*;
  */
 public final class Grib2Json {
 
-    private final File gribFile;
+    private final File file;
     private final List<Options> optionGroups;
 
-    public Grib2Json(File gribFile, List<Options> optionGroups) {
-        if (!gribFile.exists()) {
-            throw new IllegalArgumentException("Cannot find input file: " + gribFile);
+    public Grib2Json(File file, List<Options> optionGroups) {
+        if (!file.exists()) {
+            throw new IllegalArgumentException("Cannot find input file: " + file);
         }
-        this.gribFile = gribFile;
+        this.file = file;
         this.optionGroups = optionGroups;
     }
 
-    private void write(RandomAccessFile raf, Grib2Input input, Options options) throws IOException {
+    private JsonGenerator newJsonGenerator(Options options) throws IOException {
         JsonGeneratorFactory jgf =
             Json.createGeneratorFactory(
                 options.isCompactFormat() ?
@@ -45,13 +48,16 @@ public final class Grib2Json {
             new BufferedOutputStream(new FileOutputStream(options.getOutput(), false)) :
             System.out;
 
-        JsonGenerator jg = jgf.createGenerator(output);
+        return jgf.createGenerator(output);
+    }
 
+    private void write(RandomAccessFile raf, Grib2Input input, Options options) throws IOException {
+        JsonGenerator jg = newJsonGenerator(options);
         jg.writeStartArray();
 
         List<Grib2Record> records = input.getRecords();
         for (Grib2Record record : records) {
-            RecordWriter rw = new RecordWriter(jg, record, options);
+            GribRecordWriter rw = new GribRecordWriter(jg, record, options);
             if (rw.isSelected()) {
                 jg.writeStartObject();
                 rw.writeHeader();
@@ -66,22 +72,44 @@ public final class Grib2Json {
         jg.close();
     }
 
+    private void write(NetcdfFile netcdfFile, Options options) throws IOException {
+        JsonGenerator jg = newJsonGenerator(options);
+        jg.writeStartArray();
+
+        int days = netcdfFile.findVariable("time").readScalarInt();
+        DateTime date = new DateTime(1992, 10, 5, 0, 0, DateTimeZone.UTC).plusDays(days);
+        double depth = netcdfFile.findVariable("depth").readScalarDouble();
+
+        new OscarRecordWriter(jg, netcdfFile.findVariable("u"), date, depth, options).writeRecord();
+        new OscarRecordWriter(jg, netcdfFile.findVariable("v"), date, depth, options).writeRecord();
+
+        jg.writeEnd();
+        jg.close();
+    }
+
     /**
-     * Convert the GRIB2 file to Json as specified by the command line options.
+     * Convert the input file to Json as specified by the command line options.
      */
     public void write() throws IOException {
 
-        RandomAccessFile raf = new RandomAccessFile(gribFile.getPath(), "r");
+        // Try opening the file as GRIB format.
+        RandomAccessFile raf = new RandomAccessFile(file.getPath(), "r");
         raf.order(RandomAccessFile.BIG_ENDIAN);
         Grib2Input input = new Grib2Input(raf);
-        if (!input.scan(false, false)) {
-            throw new IllegalArgumentException("Failed to successfully scan grib file.");
+        if (input.scan(false, false)) {
+            for (Options options : optionGroups) {
+                write(raf, input, options);
+            }
+            raf.close();
         }
+        else {
+            raf.close();
 
-        for (Options options : optionGroups) {
-            write(raf, input, options);
+            // Otherwise, process it as NetCDF format.
+            NetcdfFile netcdfFile = NetcdfFile.open(file.getPath());
+            for (Options options : optionGroups) {
+                write(netcdfFile, options);
+            }
         }
-
-        raf.close();
     }
 }
