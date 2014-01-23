@@ -5,6 +5,7 @@ import org.joda.time.DateTimeZone;
 import ucar.ma2.*;
 import ucar.nc2.Variable;
 
+import javax.json.JsonValue;
 import javax.json.stream.JsonGenerator;
 import java.io.IOException;
 
@@ -139,7 +140,7 @@ final class OscarRecordWriter extends AbstractRecordWriter {
             IndexIterator ii = data.getIndexIterator();
             while (ii.hasNext()) {
                 float value = ii.getFloatNext();
-                jg.write(new FloatValue(Float.isNaN(value) ? value : round(value, 50)));
+                jg.write(Float.isNaN(value) ? JsonValue.NULL : new FloatValue(round(value, 50)));
             }
             jg.writeEnd();
         }
