@@ -12,7 +12,7 @@ import java.io.File;
  *
  * @author Cameron Beccario
  */
-@CommandLineInterface(application="grib2json")
+@CommandLineInterface(application="grib2json", order=OptionOrder.LONGNAME)
 public interface Options {
 
     @Option(longName="help", shortName="h", description="display this help")

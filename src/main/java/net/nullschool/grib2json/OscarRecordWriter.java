@@ -55,7 +55,7 @@ final class OscarRecordWriter extends AbstractRecordWriter {
     }
 
     private void writeIdentification() {
-        write("center", 255, "Earth & Space Research");
+        write("center", -3, "Earth & Space Research");
         write("refTime", date.withZone(DateTimeZone.UTC).toString());
         write("significanceOfRT", 0, "Analysis");
     }

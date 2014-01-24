@@ -2,6 +2,8 @@ package net.nullschool.grib2json;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ucar.grib.grib2.*;
 import ucar.nc2.NetcdfFile;
 import ucar.unidata.io.RandomAccessFile;
@@ -25,6 +27,9 @@ import static java.util.Collections.*;
  * @author Cameron Beccario
  */
 public final class Grib2Json {
+
+    private static final Logger log = LoggerFactory.getLogger(Grib2Json.class);
+
 
     private final File file;
     private final List<Options> optionGroups;
@@ -107,6 +112,7 @@ public final class Grib2Json {
 
             // Otherwise, process it as NetCDF format.
             NetcdfFile netcdfFile = NetcdfFile.open(file.getPath());
+            log.info("File contents:\n{}", netcdfFile);
             for (Options options : optionGroups) {
                 write(netcdfFile, options);
             }
