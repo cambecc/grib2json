@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -ux
+mvn package
+tar -xvzf target/grib2json-0.8.0-SNAPSHOT.tar.gz
+cp grib2json-0.8.0-SNAPSHOT/bin/* /usr/src/app/bin
+
+cp grib2json-0.8.0-SNAPSHOT/lib/grib2json-0.8.0-SNAPSHOT.jar /usr/src/app/lib/
+rm -Rf /usr/src/app/grib2json-0.8.0-SNAPSHOT
+rm -Rf /usr/src/app/target

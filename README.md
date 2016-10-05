@@ -11,7 +11,9 @@ Installation
 
 ```
 git clone <this project>
-mvn package
+docker-compose run grib2json ./build
+
+export PATH=$PATH:/path/to/this/dir/bin
 ```
 
 This creates a .tar.gz in the target directory. Unzip and untar the package in a location of choice.
