@@ -3,10 +3,10 @@ services:
     grib2json:
         container_name: grib2json
         build:
-            context: .
+            context: ./docker
             dockerfile: Dockerfile
         volumes:
-          - .:/usr/src/app
-          - ./m2_cache:/home/temp/.m2
+          - ../:/usr/src/app
+          - ../m2_cache:/home/temp/.m2
         working_dir: /usr/src/app
         entrypoint: ./docker-entrypoint.sh

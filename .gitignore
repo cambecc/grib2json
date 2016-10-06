@@ -3,6 +3,5 @@ node_modules
 target
 scratch
 *.iml
-bin/*
-lib/*
+compiled/*
 m2_cache/*
