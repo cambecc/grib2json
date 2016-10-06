@@ -1,0 +1,3 @@
+#!/bin/sh
+
+docker-compose run grib2json grib2json $@

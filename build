@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -ux
+mvn package
+
+tar -xvzf /usr/src/app/target/grib2json-0.8.0-SNAPSHOT.tar.gz -C /usr/src/app/compiled/
+rm -Rf /usr/src/app/target
+mv /usr/src/app/compiled/grib2json-0.8.0-SNAPSHOT /usr/src/app/compiled/grib2json

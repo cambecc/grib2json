@@ -11,28 +11,18 @@ Installation
 
 ```
 git clone <this project>
-docker-compose build grib2json
 docker-compose run grib2json ./build
+
+export PATH=$PATH:/path/to/this/dir/bin
 ```
+
+This creates a .tar.gz in the target directory. Unzip and untar the package in a location of choice.
 
 Usage
 -----
 
-*You have two choices*:
-    - Use docker to run grib2json (No local java dependencies required)    
-    **Note that using the docker to run grib2json requires the output to be saved in `/usr/src/app/output` **
-    ```
-    docker-compose run grib2json grib2json <some_command>
-    ```
-    - Or use provided executable (Local java dependencies required)
-    ```
-    export PATH=$PATH:/path/to/this/dir/compiled/grib2json/bin
-    grib2json <some_command>
-    ```
-
 The `grib2json` launch script is located in the `bin` directory and requires the `JAVA_HOME` environment
 variable to be defined.
-
 
 ```
 > grib2json --help
