@@ -7,4 +7,5 @@ RUN curl -o gosu -fsSL "$GOSU_DOWNLOAD_URL" > gosu-amd64 \
  && chmod +x /usr/bin/gosu
 
 RUN mkdir -p /usr/src/app
+RUN mkdir -p /usr/src/app/compiled/grib2json/bin
 WORKDIR /usr/src/app
