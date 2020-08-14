@@ -1,20 +1,25 @@
 package net.nullschool.grib2json;
 
+import static java.util.Collections.singletonMap;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+import javax.json.Json;
+import javax.json.stream.JsonGenerator;
+import javax.json.stream.JsonGeneratorFactory;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ucar.grib.grib2.*;
+import ucar.grib.grib2.Grib2Data;
+import ucar.grib.grib2.Grib2Input;
+import ucar.grib.grib2.Grib2Record;
 import ucar.nc2.NetcdfFile;
 import ucar.unidata.io.RandomAccessFile;
-
-import javax.json.Json;
-import javax.json.stream.JsonGenerator;
-import javax.json.stream.JsonGeneratorFactory;
-import java.io.*;
-import java.util.*;
-
-import static java.util.Collections.*;
 
 /**
  * 2013-10-25<p/>
