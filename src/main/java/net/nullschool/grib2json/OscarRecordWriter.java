@@ -1,19 +1,21 @@
 package net.nullschool.grib2json;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import ucar.ma2.*;
-import ucar.nc2.Variable;
-
-import javax.json.JsonValue;
-import javax.json.stream.JsonGenerator;
-import java.io.IOException;
-
-import static ucar.grib.grib2.Grib2Tables.*;
+import static ucar.grib.grib2.Grib2Tables.codeTable3_2;
+import static ucar.grib.grib2.Grib2Tables.codeTable4_5;
 import static ucar.grib.grib2.ParameterTable.getCategoryName;
+import static ucar.grib.grib2.ParameterTable.getDisciplineName;
 import static ucar.grib.grib2.ParameterTable.getParameterName;
 import static ucar.grib.grib2.ParameterTable.getParameterUnit;
-import static ucar.grib.grib2.ParameterTable.getDisciplineName;
+
+import java.io.IOException;
+import javax.json.JsonValue;
+import javax.json.stream.JsonGenerator;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import ucar.ma2.Array;
+import ucar.ma2.IndexIterator;
+import ucar.ma2.InvalidRangeException;
+import ucar.nc2.Variable;
 
 
 /**
